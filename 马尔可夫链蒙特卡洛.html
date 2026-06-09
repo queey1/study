@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>马尔可夫链蒙特卡洛</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --paper: rgba(255, 252, 245, 0.86);
+      --paper-strong: rgba(255, 251, 243, 0.95);
+      --ink: #1f2430;
+      --muted: #586172;
+      --accent: #d66b2d;
+      --accent-soft: rgba(214, 107, 45, 0.16);
+      --accent-2: #1d6c78;
+      --accent-2-soft: rgba(29, 108, 120, 0.16);
+      --border: rgba(31, 36, 48, 0.12);
+      --shadow: 0 18px 45px rgba(63, 43, 24, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(214, 107, 45, 0.28), transparent 32%),
+        radial-gradient(circle at 85% 15%, rgba(29, 108, 120, 0.22), transparent 28%),
+        linear-gradient(180deg, #efe4d2 0%, var(--bg) 46%, #e7dfd0 100%);
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      pointer-events: none;
+      border-radius: 999px;
+      filter: blur(8px);
+      opacity: 0.55;
+    }
+
+    body::before {
+      width: 360px;
+      height: 360px;
+      top: -110px;
+      right: -90px;
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    body::after {
+      width: 300px;
+      height: 300px;
+      bottom: -120px;
+      left: -80px;
+      background: rgba(29, 108, 120, 0.14);
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 24px auto 32px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero,
+    .panel,
+    .notes {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    .hero {
+      padding: 28px 28px 22px;
+      display: grid;
+      gap: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.36) 50%, transparent 100%);
+      transform: translateX(-100%);
+      animation: sheen 8s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes sheen {
+      0% { transform: translateX(-100%); }
+      45%, 100% { transform: translateX(100%); }
+    }
+
+    .eyebrow {
+      font-size: 0.82rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 5vw, 4.8rem);
+      line-height: 0.95;
+      margin: 0;
+      font-weight: 700;
+      max-width: 9ch;
+    }
+
+    .lead {
+      max-width: 72ch;
+      margin: 0;
+      font-size: 1.08rem;
+      line-height: 1.65;
+      color: var(--muted);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .hero-metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: var(--paper-strong);
+      border: 1px solid rgba(31, 36, 48, 0.09);
+      border-radius: 18px;
+      padding: 14px 16px;
+      transform: translateY(16px);
+      opacity: 0;
+      animation: rise 700ms ease forwards;
+    }
+
+    .metric-card:nth-child(2) { animation-delay: 90ms; }
+    .metric-card:nth-child(3) { animation-delay: 180ms; }
+
+    @keyframes rise {
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .metric-label {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .metric-value {
+      margin: 0;
+      font-size: clamp(1.45rem, 4vw, 2.2rem);
+      font-weight: 700;
+    }
+
+    .metric-note {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .controls-card {
+      background: linear-gradient(180deg, rgba(255, 251, 243, 0.98), rgba(247, 241, 232, 0.92));
+      border: 1px solid rgba(31, 36, 48, 0.08);
+      border-radius: 20px;
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .control-footnote {
+      margin: 0;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(29, 108, 120, 0.08);
+      border: 1px solid rgba(29, 108, 120, 0.12);
+      color: var(--muted);
+      line-height: 1.58;
+      font-size: 0.95rem;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      font-size: 0.98rem;
+    }
+
+    .control-header span:last-child {
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font: inherit;
+      cursor: pointer;
+      transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(31, 36, 48, 0.1);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: #fff9f4;
+    }
+
+    .secondary {
+      background: rgba(31, 36, 48, 0.08);
+      color: var(--ink);
+    }
+
+    .ghost {
+      background: rgba(29, 108, 120, 0.12);
+      color: var(--accent-2);
+    }
+
+    .panel {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    .panel p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .viz-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+      gap: 18px;
+    }
+
+    .canvas-card {
+      background: linear-gradient(180deg, rgba(255, 252, 246, 0.95), rgba(244, 238, 226, 0.96));
+      border-radius: 20px;
+      border: 1px solid rgba(31, 36, 48, 0.08);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    canvas {
+      width: 100%;
+      display: block;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(242, 236, 224, 0.96));
+      border: 1px solid rgba(31, 36, 48, 0.08);
+    }
+
+    .caption {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mini-card {
+      background: var(--paper-strong);
+      border-radius: 16px;
+      padding: 12px 14px;
+      border: 1px solid rgba(31, 36, 48, 0.08);
+    }
+
+    .mini-card strong {
+      display: block;
+      font-size: 1.05rem;
+      margin-top: 4px;
+    }
+
+    .notes {
+      padding: 18px 20px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .notes h2 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    .notes .panel-header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .logic-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .logic-card {
+      background: linear-gradient(180deg, rgba(255, 252, 247, 0.92), rgba(247, 240, 231, 0.92));
+      border-radius: 18px;
+      padding: 15px 16px;
+      border: 1px solid rgba(31, 36, 48, 0.08);
+      line-height: 1.62;
+    }
+
+    .logic-step {
+      margin: 0 0 8px;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .logic-card h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+    }
+
+    .logic-card p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .note-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .note {
+      background: rgba(255, 252, 247, 0.86);
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid rgba(31, 36, 48, 0.07);
+      line-height: 1.58;
+    }
+
+    .note strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--accent-2);
+      font-size: 0.98rem;
+    }
+
+    .footer-line {
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .viz-grid,
+      .note-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .logic-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-metric-row,
+      .mini-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        width: min(100vw - 18px, 1180px);
+        margin: 9px auto 18px;
+      }
+
+      .hero,
+      .panel,
+      .notes {
+        border-radius: 20px;
+      }
+
+      .hero,
+      .panel,
+      .notes,
+      .controls-card,
+      .canvas-card {
+        padding: 14px;
+      }
+
+      .hero-metric-row,
+      .mini-stats,
+      .logic-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .caption,
+      .panel-header {
+        flex-direction: column;
+        align-items: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Markov Chain Monte Carlo</p>
+      <div class="hero-grid">
+        <div>
+          <h1>马尔可夫链 蒙特卡洛</h1>
+          <p class="lead">
+            这不是“很多粒子同时乱走”，而是一条链在状态空间里一点一点试探。
+            每次只从当前位置提一个候选点，然后按目标分布的相对概率决定接受还是拒绝。
+            久而久之，这条链停留得更久的区域，就会拼出目标分布本身。
+          </p>
+        </div>
+        <div class="controls-card">
+          <div class="control-group">
+            <div class="control-header">
+              <span>每秒转移次数</span>
+              <span id="speedValue">14</span>
+            </div>
+            <input id="speedInput" type="range" min="1" max="120" step="1" value="14" />
+          </div>
+
+          <div class="control-group">
+            <div class="control-header">
+              <span>试探步长</span>
+              <span id="scaleValue">0.80</span>
+            </div>
+            <input id="scaleInput" type="range" min="0.15" max="2.8" step="0.01" value="0.80" />
+          </div>
+
+          <p class="control-footnote">
+            演示的是随机游走 Metropolis-Hastings：因为提议分布是对称的，所以接受率就是
+            α = min(1, π(x') / π(x))。
+            往高概率区域走几乎总被接受，往低概率区域走则常被拒绝。
+            点击“重置并换目标”后，整张目标分布会平移到新的位置，链也会在新的概率地形上重新开始。
+          </p>
+
+          <div class="button-row">
+            <button id="startButton" class="primary">开始</button>
+            <button id="pauseButton" class="secondary">暂停</button>
+            <button id="stepButton" class="ghost">单步提议</button>
+            <button id="resetButton" class="secondary">重置并换目标</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-metric-row">
+        <article class="metric-card">
+          <p class="metric-label">已转移步数</p>
+          <p class="metric-value" id="sampleCount">0</p>
+          <p class="metric-note">起点先落下，之后每一步都会追加停留记录</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">累计接受率</p>
+          <p class="metric-value" id="acceptRate">0.00%</p>
+          <p class="metric-note">步长太大时接受率会明显下降</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">最近一步接受概率</p>
+          <p class="metric-value" id="lastAcceptance">--</p>
+          <p class="metric-note">这是当前候选点被接受的理论概率</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>一条链，两个视角</h2>
+          <p>左边看单步提议与接受/拒绝，右边看这些样本长期累积后如何逼近目标分布。</p>
+        </div>
+        <p id="statusText">已就绪：点击开始，让粒子在当前目标分布上发起第一次试探。</p>
+      </div>
+
+      <div class="viz-grid">
+        <section class="canvas-card">
+          <canvas id="chainCanvas" width="560" height="460"></canvas>
+          <div class="caption">
+            <span>左图底色是目标分布，虚线是提议，绿点表示接受，红叉表示拒绝。</span>
+            <span id="proposalText">等待第一步提议。</span>
+          </div>
+        </section>
+
+        <section class="canvas-card">
+          <canvas id="heatmapCanvas" width="560" height="460"></canvas>
+          <div class="caption">
+            <span>右图底色仍是目标分布，橙色热图是链到目前为止采出的经验分布。</span>
+            <span id="heatmapText">样本少时很噪，样本多时会越来越像目标分布。</span>
+          </div>
+        </section>
+      </div>
+
+      <div class="mini-stats">
+        <div class="mini-card">已接受次数<strong id="acceptedCount">0</strong></div>
+        <div class="mini-card">已拒绝次数<strong id="rejectedCount">0</strong></div>
+        <div class="mini-card">当前状态<strong id="currentState">(-3.40, 2.30)</strong></div>
+        <div class="mini-card">覆盖网格数<strong id="coveredCells">1</strong></div>
+      </div>
+    </section>
+
+    <section class="notes">
+      <div class="panel-header">
+        <div>
+          <h2>粒子每一步到底怎么动</h2>
+          <p>页面里始终只有一个粒子。它不断重复下面这组规则，所以微观上是随机试探，宏观上却会拼出稳定的目标分布。</p>
+        </div>
+      </div>
+
+      <div class="logic-grid">
+        <article class="logic-card">
+          <p class="logic-step">Step 1</p>
+          <h3>锁定当前状态</h3>
+          <p>链只有“现在站在哪里”这一条记忆。左图橙点就是当前状态，右图会把这个停留位置压进经验热图。</p>
+        </article>
+        <article class="logic-card">
+          <p class="logic-step">Step 2</p>
+          <h3>在附近提一个候选点</h3>
+          <p>每一步都会从当前点周围抽一组高斯噪声，得到候选点 x'。试探步长越大，这一步跳得越远，也越容易跳进低概率区。</p>
+        </article>
+        <article class="logic-card">
+          <p class="logic-step">Step 3</p>
+          <h3>读取目标分布的高低</h3>
+          <p>底图表示目标分布 π(x)。候选点落在颜色更“浓”的区域，意味着 π(x') 更大；落在更淡的区域，意味着它更不符合目标分布。</p>
+        </article>
+        <article class="logic-card">
+          <p class="logic-step">Step 4</p>
+          <h3>按概率决定接受还是拒绝</h3>
+          <p>程序先算 α = min(1, π(x') / π(x))，再抽一个 0 到 1 的随机数。随机数小于 α 就接受，否则拒绝，所以“往高处走”通常更容易成功。</p>
+        </article>
+        <article class="logic-card">
+          <p class="logic-step">Step 5</p>
+          <h3>接受就移动，拒绝就原地停留</h3>
+          <p>接受时粒子真的跳到候选点；拒绝时粒子不动，但这次停留仍然会被记进热图。所以高概率区即使不总在移动，也会越积越亮。</p>
+        </article>
+        <article class="logic-card">
+          <p class="logic-step">Step 6</p>
+          <h3>长期重复后逼近目标</h3>
+          <p>这一整套动作被重复很多次后，右图的热图会越来越像底图。点击“重置并换目标”会把整张概率地形平移到新位置，再重新开始同样的采样逻辑。</p>
+        </article>
+      </div>
+
+      <div class="note-grid">
+        <article class="note">
+          <strong>马尔可夫链</strong>
+          下一步只看当前所处的位置，不看更久远的历史。链总是在“当前状态”附近提出一个新候选点。
+        </article>
+        <article class="note">
+          <strong>蒙特卡洛</strong>
+          不是直接把目标分布写出来，而是让链长期运行，再用样本频率去逼近它。所以右边的热图会越跑越像底图。
+        </article>
+        <article class="note">
+          <strong>调参直觉</strong>
+          试探步长太小，链会磨磨蹭蹭地在局部打转；步长太大，很多候选点会掉进低概率区被拒绝。通常接受率保持在中间地带更健康。
+        </article>
+      </div>
+      <p class="footer-line">
+        这个演示用的是二维随机游走 Metropolis-Hastings。目标分布是固定的双峰密度，链每次用高斯噪声提出候选点。
+        由于提议分布对称，接受率只取决于目标密度的比值；这就是为什么链会更常停留在高概率区域，进而把目标分布“采样”出来。重置时虽然目标地形会换位置，但粒子遵循的规则不会改变。
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const chainCanvas = document.getElementById("chainCanvas");
+    const heatmapCanvas = document.getElementById("heatmapCanvas");
+    const chainCtx = chainCanvas.getContext("2d");
+    const heatmapCtx = heatmapCanvas.getContext("2d");
+
+    const speedInput = document.getElementById("speedInput");
+    const scaleInput = document.getElementById("scaleInput");
+    const startButton = document.getElementById("startButton");
+    const pauseButton = document.getElementById("pauseButton");
+    const stepButton = document.getElementById("stepButton");
+    const resetButton = document.getElementById("resetButton");
+
+    const speedValue = document.getElementById("speedValue");
+    const scaleValue = document.getElementById("scaleValue");
+    const sampleCount = document.getElementById("sampleCount");
+    const acceptRate = document.getElementById("acceptRate");
+    const lastAcceptance = document.getElementById("lastAcceptance");
+    const acceptedCount = document.getElementById("acceptedCount");
+    const rejectedCount = document.getElementById("rejectedCount");
+    const currentState = document.getElementById("currentState");
+    const coveredCells = document.getElementById("coveredCells");
+    const statusText = document.getElementById("statusText");
+    const proposalText = document.getElementById("proposalText");
+    const heatmapText = document.getElementById("heatmapText");
+
+    const numberFormat = new Intl.NumberFormat("zh-CN");
+    const SIMULATION_INTERVAL_MS = 40;
+    const TAIL_LIMIT = 320;
+    const PROPOSAL_PREVIEW_MS = 1200;
+    const GRID_WIDTH = 70;
+    const GRID_HEIGHT = 58;
+    const WORLD = {
+      xmin: -5.2,
+      xmax: 5.2,
+      ymin: -4.3,
+      ymax: 4.3,
+    };
+    const BASE_INITIAL_STATE = { x: -3.4, y: 2.3 };
+    const BASE_TARGET_COMPONENTS = [
+      { weight: 0.52, meanX: -1.9, meanY: -0.9, sigmaX: 0.72, sigmaY: 0.58, rho: 0.18 },
+      { weight: 0.33, meanX: 1.5, meanY: 1.4, sigmaX: 0.82, sigmaY: 0.68, rho: -0.22 },
+      { weight: 0.15, meanX: 0.1, meanY: -0.2, sigmaX: 1.9, sigmaY: 0.42, rho: 0 },
+    ];
+    const TARGET_SHIFT_MARGIN_X = 0.85;
+    const TARGET_SHIFT_MARGIN_Y = 0.85;
+    const MIN_TARGET_SHIFT_DISTANCE = 1.4;
+    const TARGET_SHIFT_RANGE = (() => {
+      const xs = BASE_TARGET_COMPONENTS.map((component) => component.meanX).concat(BASE_INITIAL_STATE.x);
+      const ys = BASE_TARGET_COMPONENTS.map((component) => component.meanY).concat(BASE_INITIAL_STATE.y);
+      return {
+        minX: WORLD.xmin + TARGET_SHIFT_MARGIN_X - Math.min(...xs),
+        maxX: WORLD.xmax - TARGET_SHIFT_MARGIN_X - Math.max(...xs),
+        minY: WORLD.ymin + TARGET_SHIFT_MARGIN_Y - Math.min(...ys),
+        maxY: WORLD.ymax - TARGET_SHIFT_MARGIN_Y - Math.max(...ys),
+      };
+    })();
+
+    const state = {
+      running: false,
+      speed: Number(speedInput.value),
+      proposalScale: Number(scaleInput.value),
+      current: null,
+      targetOffset: { x: 0, y: 0 },
+      tail: [],
+      occupancy: [],
+      occupiedCellCount: 0,
+      maxOccupancy: 1,
+      accepted: 0,
+      rejected: 0,
+      totalSteps: 0,
+      accumulator: 0,
+      animationId: 0,
+      lastProposal: null,
+      backgroundCache: null,
+      densityMax: 1,
+    };
+
+    function gaussianBump(x, y, meanX, meanY, sigmaX, sigmaY, rho = 0) {
+      const dx = (x - meanX) / sigmaX;
+      const dy = (y - meanY) / sigmaY;
+      const rho2 = 1 - rho * rho;
+      const exponent = -((dx * dx) - (2 * rho * dx * dy) + (dy * dy)) / (2 * rho2);
+      return Math.exp(exponent);
+    }
+
+    function targetDensity(x, y) {
+      const shiftedX = x - state.targetOffset.x;
+      const shiftedY = y - state.targetOffset.y;
+      return BASE_TARGET_COMPONENTS.reduce((sum, component) => {
+        return sum + component.weight * gaussianBump(
+          shiftedX,
+          shiftedY,
+          component.meanX,
+          component.meanY,
+          component.sigmaX,
+          component.sigmaY,
+          component.rho
+        );
+      }, 0);
+    }
+
+    function randomInRange(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function createTargetOffset(previousOffset) {
+      let candidate = { x: 0, y: 0 };
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        candidate = {
+          x: randomInRange(TARGET_SHIFT_RANGE.minX, TARGET_SHIFT_RANGE.maxX),
+          y: randomInRange(TARGET_SHIFT_RANGE.minY, TARGET_SHIFT_RANGE.maxY),
+        };
+        if (!previousOffset) {
+          return candidate;
+        }
+        const distance = Math.hypot(candidate.x - previousOffset.x, candidate.y - previousOffset.y);
+        if (distance >= MIN_TARGET_SHIFT_DISTANCE) {
+          return candidate;
+        }
+      }
+      return candidate;
+    }
+
+    function getShiftedInitialState(offset) {
+      return {
+        x: BASE_INITIAL_STATE.x + offset.x,
+        y: BASE_INITIAL_STATE.y + offset.y,
+      };
+    }
+
+    function updateButtonStates() {
+      startButton.disabled = state.running;
+      pauseButton.disabled = !state.running;
+    }
+
+    function setControlLabels() {
+      speedValue.textContent = String(state.speed);
+      scaleValue.textContent = state.proposalScale.toFixed(2);
+    }
+
+    function resetSimulation() {
+      const previousOffset = state.targetOffset;
+      state.targetOffset = createTargetOffset(previousOffset);
+      state.running = false;
+      state.current = getShiftedInitialState(state.targetOffset);
+      state.tail = [{ ...state.current }];
+      state.occupancy = Array.from({ length: GRID_WIDTH * GRID_HEIGHT }, () => 0);
+      state.occupiedCellCount = 0;
+      state.maxOccupancy = 1;
+      state.accepted = 0;
+      state.rejected = 0;
+      state.totalSteps = 0;
+      state.accumulator = 0;
+      state.lastProposal = null;
+      state.backgroundCache = null;
+      buildBackgroundCache();
+      recordSample(state.current.x, state.current.y);
+      updateButtonStates();
+      updateReadouts();
+      drawChain();
+      drawHeatmap();
+    }
+
+    function mapToCanvas(x, y, width, height) {
+      return {
+        x: ((x - WORLD.xmin) / (WORLD.xmax - WORLD.xmin)) * width,
+        y: height - ((y - WORLD.ymin) / (WORLD.ymax - WORLD.ymin)) * height,
+      };
+    }
+
+    function canvasToWorld(gridX, gridY) {
+      const x = WORLD.xmin + ((gridX + 0.5) / GRID_WIDTH) * (WORLD.xmax - WORLD.xmin);
+      const y = WORLD.ymin + ((gridY + 0.5) / GRID_HEIGHT) * (WORLD.ymax - WORLD.ymin);
+      return { x, y };
+    }
+
+    function worldToGrid(x, y) {
+      const gridX = Math.max(0, Math.min(GRID_WIDTH - 1, Math.floor(((x - WORLD.xmin) / (WORLD.xmax - WORLD.xmin)) * GRID_WIDTH)));
+      const gridY = Math.max(0, Math.min(GRID_HEIGHT - 1, Math.floor(((y - WORLD.ymin) / (WORLD.ymax - WORLD.ymin)) * GRID_HEIGHT)));
+      return { gridX, gridY };
+    }
+
+    function buildBackgroundCache() {
+      let densityMax = 0;
+      for (let gx = 0; gx < 160; gx += 1) {
+        for (let gy = 0; gy < 130; gy += 1) {
+          const x = WORLD.xmin + (gx / 159) * (WORLD.xmax - WORLD.xmin);
+          const y = WORLD.ymin + (gy / 129) * (WORLD.ymax - WORLD.ymin);
+          densityMax = Math.max(densityMax, targetDensity(x, y));
+        }
+      }
+      state.densityMax = densityMax;
+
+      function renderBackground(width, height, subtle) {
+        const offscreen = document.createElement("canvas");
+        offscreen.width = width;
+        offscreen.height = height;
+        const ctx = offscreen.getContext("2d");
+        const image = ctx.createImageData(width, height);
+
+        for (let py = 0; py < height; py += 1) {
+          for (let px = 0; px < width; px += 1) {
+            const x = WORLD.xmin + (px / (width - 1)) * (WORLD.xmax - WORLD.xmin);
+            const y = WORLD.ymax - (py / (height - 1)) * (WORLD.ymax - WORLD.ymin);
+            const normalized = Math.min(1, targetDensity(x, y) / densityMax);
+            const eased = Math.sqrt(normalized);
+            const baseIndex = (py * width + px) * 4;
+            const teal = subtle ? 219 : 199;
+            const green = subtle ? 222 : 210;
+            const red = subtle ? 235 : 225;
+
+            image.data[baseIndex] = Math.round(red - eased * (subtle ? 14 : 55));
+            image.data[baseIndex + 1] = Math.round(green - eased * (subtle ? 18 : 62));
+            image.data[baseIndex + 2] = Math.round(teal - eased * (subtle ? 12 : 78));
+            image.data[baseIndex + 3] = Math.round((subtle ? 55 : 118) + eased * (subtle ? 55 : 90));
+          }
+        }
+
+        ctx.putImageData(image, 0, 0);
+        drawTargetContours(ctx, width, height, subtle ? 0.18 : 0.28);
+        drawAxes(ctx, width, height);
+        return offscreen;
+      }
+
+      state.backgroundCache = {
+        chain: renderBackground(chainCanvas.width, chainCanvas.height, false),
+        heatmap: renderBackground(heatmapCanvas.width, heatmapCanvas.height, true),
+      };
+    }
+
+    function drawAxes(ctx, width, height) {
+      const origin = mapToCanvas(0, 0, width, height);
+      ctx.strokeStyle = "rgba(31, 36, 48, 0.18)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, origin.y);
+      ctx.lineTo(width, origin.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(origin.x, 0);
+      ctx.lineTo(origin.x, height);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(31, 36, 48, 0.62)";
+      ctx.font = '12px Georgia';
+      ctx.fillText("x", width - 14, origin.y - 8);
+      ctx.fillText("y", origin.x + 8, 14);
+    }
+
+    function drawTargetContours(ctx, width, height, alpha) {
+      const levels = [0.15, 0.32, 0.52, 0.74];
+      const step = 10;
+      ctx.strokeStyle = `rgba(29, 108, 120, ${alpha})`;
+      ctx.lineWidth = 1;
+
+      levels.forEach((level) => {
+        for (let gx = 0; gx < width - step; gx += step) {
+          for (let gy = 0; gy < height - step; gy += step) {
+            const p1 = sampleNormalizedDensity(gx, gy, width, height);
+            const p2 = sampleNormalizedDensity(gx + step, gy, width, height);
+            const p3 = sampleNormalizedDensity(gx + step, gy + step, width, height);
+            const p4 = sampleNormalizedDensity(gx, gy + step, width, height);
+            const above = [p1, p2, p3, p4].map((value) => value >= level);
+            const count = above.filter(Boolean).length;
+            if (count === 0 || count === 4) {
+              continue;
+            }
+            ctx.strokeRect(gx, gy, step, step);
+          }
+        }
+      });
+    }
+
+    function sampleNormalizedDensity(px, py, width, height) {
+      const x = WORLD.xmin + (px / width) * (WORLD.xmax - WORLD.xmin);
+      const y = WORLD.ymax - (py / height) * (WORLD.ymax - WORLD.ymin);
+      return targetDensity(x, y) / state.densityMax;
+    }
+
+    function randomNormal() {
+      let u = 0;
+      let v = 0;
+      while (u === 0) {
+        u = Math.random();
+      }
+      while (v === 0) {
+        v = Math.random();
+      }
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+
+    function recordSample(x, y) {
+      const { gridX, gridY } = worldToGrid(x, y);
+      const index = gridY * GRID_WIDTH + gridX;
+      if (state.occupancy[index] === 0) {
+        state.occupiedCellCount += 1;
+      }
+      state.occupancy[index] += 1;
+      state.maxOccupancy = Math.max(state.maxOccupancy, state.occupancy[index]);
+    }
+
+    function runMcmcStep() {
+      const from = { ...state.current };
+      const candidate = {
+        x: from.x + randomNormal() * state.proposalScale,
+        y: from.y + randomNormal() * state.proposalScale,
+      };
+
+      const currentDensity = targetDensity(from.x, from.y);
+      const candidateDensity = targetDensity(candidate.x, candidate.y);
+      const ratio = currentDensity === 0 ? 1 : candidateDensity / currentDensity;
+      const alpha = Math.min(1, ratio);
+      const accepted = Math.random() < alpha;
+
+      state.totalSteps += 1;
+      if (accepted) {
+        state.accepted += 1;
+        state.current = candidate;
+      } else {
+        state.rejected += 1;
+      }
+
+      state.tail.push({ x: state.current.x, y: state.current.y });
+      if (state.tail.length > TAIL_LIMIT) {
+        state.tail.splice(0, state.tail.length - TAIL_LIMIT);
+      }
+
+      recordSample(state.current.x, state.current.y);
+      state.lastProposal = {
+        from,
+        candidate,
+        accepted,
+        alpha,
+        ratio,
+        time: performance.now(),
+        resultingState: { ...state.current },
+      };
+
+      updateReadouts();
+    }
+
+    function updateReadouts() {
+      sampleCount.textContent = numberFormat.format(state.totalSteps);
+      const total = Math.max(1, state.totalSteps);
+      acceptRate.textContent = `${((state.accepted / total) * 100).toFixed(2)}%`;
+      lastAcceptance.textContent = state.lastProposal ? `${(state.lastProposal.alpha * 100).toFixed(1)}%` : "--";
+      acceptedCount.textContent = numberFormat.format(state.accepted);
+      rejectedCount.textContent = numberFormat.format(state.rejected);
+      currentState.textContent = `(${state.current.x.toFixed(2)}, ${state.current.y.toFixed(2)})`;
+      coveredCells.textContent = numberFormat.format(state.occupiedCellCount);
+
+      if (!state.lastProposal) {
+        proposalText.textContent = state.running
+          ? "等待第一步提议。粒子会先从当前点向周围丢出一个候选点。"
+          : "等待第一步提议。点击开始，让粒子在新的目标地形上先试探一步。";
+        heatmapText.textContent = "起点已经落在热图里；之后每一步都会继续叠加新的停留记录。";
+        statusText.textContent = state.running
+          ? "运行中：链正在根据当前位置提出候选点，并按目标分布决定是否接受。"
+          : "已就绪：已生成一个新的目标分布，点击开始让粒子在新地形上开始试探。";
+        return;
+      }
+
+      const verb = state.lastProposal.accepted ? "接受" : "拒绝";
+      const ratioText = state.lastProposal.ratio >= 10 ? ">10.0" : state.lastProposal.ratio.toFixed(2);
+      proposalText.textContent = `最近一步：候选点 (${state.lastProposal.candidate.x.toFixed(2)}, ${state.lastProposal.candidate.y.toFixed(2)}) 被${verb}，密度比 pi(x')/pi(x) = ${ratioText}。`;
+      heatmapText.textContent = `累计记录 ${numberFormat.format(state.totalSteps + 1)} 个停留位置（含起点）；如果右侧热图和底图越来越像，这就是 MCMC 正在起作用。`;
+
+      if (state.running) {
+        statusText.textContent = state.lastProposal.accepted
+          ? "运行中：最近的候选点被接受，链移动到了新的状态。"
+          : "运行中：最近的候选点被拒绝，链留在原地并重复记录当前位置。";
+      } else {
+        statusText.textContent = state.lastProposal.accepted
+          ? "已暂停：最近一步被接受，你可以看到链是如何向高概率区滑过去的。"
+          : "已暂停：最近一步被拒绝，你可以看到链为什么会在低概率提议前停住。";
+      }
+    }
+
+    function drawTrail(ctx, width, height) {
+      if (state.tail.length < 2) {
+        return;
+      }
+
+      for (let index = 1; index < state.tail.length; index += 1) {
+        const previous = state.tail[index - 1];
+        const current = state.tail[index];
+        const from = mapToCanvas(previous.x, previous.y, width, height);
+        const to = mapToCanvas(current.x, current.y, width, height);
+        const alpha = 0.12 + (index / (state.tail.length - 1)) * 0.52;
+        ctx.strokeStyle = `rgba(214, 107, 45, ${alpha})`;
+        ctx.lineWidth = index === state.tail.length - 1 ? 2.4 : 1.35;
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+      }
+    }
+
+    function drawProposalPreview(ctx, width, height) {
+      if (!state.lastProposal) {
+        return;
+      }
+
+      const age = 1 - ((performance.now() - state.lastProposal.time) / PROPOSAL_PREVIEW_MS);
+      if (age <= 0) {
+        return;
+      }
+
+      const from = mapToCanvas(state.lastProposal.from.x, state.lastProposal.from.y, width, height);
+      const candidate = mapToCanvas(state.lastProposal.candidate.x, state.lastProposal.candidate.y, width, height);
+      const resulting = mapToCanvas(state.lastProposal.resultingState.x, state.lastProposal.resultingState.y, width, height);
+      const alpha = Math.max(0.12, age);
+
+      ctx.setLineDash([8, 7]);
+      ctx.strokeStyle = state.lastProposal.accepted
+        ? `rgba(22, 138, 91, ${alpha})`
+        : `rgba(188, 62, 43, ${alpha})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(candidate.x, candidate.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (state.lastProposal.accepted) {
+        ctx.fillStyle = `rgba(22, 138, 91, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(candidate.x, candidate.y, 6.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(22, 138, 91, ${alpha})`;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(resulting.x, resulting.y, 10.5, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = `rgba(188, 62, 43, ${alpha})`;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(candidate.x - 7, candidate.y - 7);
+        ctx.lineTo(candidate.x + 7, candidate.y + 7);
+        ctx.moveTo(candidate.x + 7, candidate.y - 7);
+        ctx.lineTo(candidate.x - 7, candidate.y + 7);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(214, 107, 45, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(resulting.x, resulting.y, 10.5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawCurrentPoint(ctx, width, height) {
+      const point = mapToCanvas(state.current.x, state.current.y, width, height);
+      ctx.fillStyle = "rgba(214, 107, 45, 0.98)";
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 5.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(31, 36, 48, 0.7)";
+      ctx.font = '12px Georgia';
+      ctx.fillText("当前状态", point.x + 9, point.y - 9);
+    }
+
+    function drawChain() {
+      if (!state.backgroundCache) {
+        buildBackgroundCache();
+      }
+
+      const width = chainCanvas.width;
+      const height = chainCanvas.height;
+      chainCtx.clearRect(0, 0, width, height);
+      chainCtx.drawImage(state.backgroundCache.chain, 0, 0);
+      drawTrail(chainCtx, width, height);
+      drawProposalPreview(chainCtx, width, height);
+      drawCurrentPoint(chainCtx, width, height);
+      chainCtx.fillStyle = "rgba(31, 36, 48, 0.62)";
+      chainCtx.font = '12px Georgia';
+      chainCtx.fillText("浅青底图 = 目标分布 pi(x)", 20, 20);
+      chainCtx.fillText("橙色尾迹 = 链最近走过的状态", 20, 38);
+    }
+
+    function drawHeatmap() {
+      if (!state.backgroundCache) {
+        buildBackgroundCache();
+      }
+
+      const width = heatmapCanvas.width;
+      const height = heatmapCanvas.height;
+      heatmapCtx.clearRect(0, 0, width, height);
+      heatmapCtx.drawImage(state.backgroundCache.heatmap, 0, 0);
+
+      const cellWidth = width / GRID_WIDTH;
+      const cellHeight = height / GRID_HEIGHT;
+      for (let gy = 0; gy < GRID_HEIGHT; gy += 1) {
+        for (let gx = 0; gx < GRID_WIDTH; gx += 1) {
+          const count = state.occupancy[gy * GRID_WIDTH + gx];
+          if (count === 0) {
+            continue;
+          }
+          const intensity = Math.sqrt(count / state.maxOccupancy);
+          heatmapCtx.fillStyle = `rgba(214, 107, 45, ${0.08 + intensity * 0.72})`;
+          heatmapCtx.fillRect(
+            gx * cellWidth,
+            height - (gy + 1) * cellHeight,
+            cellWidth + 0.6,
+            cellHeight + 0.6
+          );
+        }
+      }
+
+      drawCurrentPoint(heatmapCtx, width, height);
+      heatmapCtx.fillStyle = "rgba(31, 36, 48, 0.62)";
+      heatmapCtx.font = '12px Georgia';
+      heatmapCtx.fillText("浅底图 = 目标分布", 20, 20);
+      heatmapCtx.fillText("橙色热图 = 链采出的经验分布", 20, 38);
+    }
+
+    function advanceSimulation() {
+      if (!state.running) {
+        return;
+      }
+
+      state.accumulator += (state.speed * SIMULATION_INTERVAL_MS) / 1000;
+      let pendingSteps = Math.floor(state.accumulator);
+      if (pendingSteps === 0) {
+        return;
+      }
+
+      state.accumulator -= pendingSteps;
+      while (pendingSteps > 0) {
+        runMcmcStep();
+        pendingSteps -= 1;
+      }
+    }
+
+    function frame() {
+      drawChain();
+      drawHeatmap();
+      state.animationId = window.requestAnimationFrame(frame);
+    }
+
+    speedInput.addEventListener("input", (event) => {
+      state.speed = Number(event.target.value);
+      setControlLabels();
+    });
+
+    scaleInput.addEventListener("input", (event) => {
+      state.proposalScale = Number(event.target.value);
+      setControlLabels();
+    });
+
+    startButton.addEventListener("click", () => {
+      if (state.running) {
+        return;
+      }
+      state.running = true;
+      state.accumulator = 0;
+      updateButtonStates();
+      updateReadouts();
+    });
+
+    pauseButton.addEventListener("click", () => {
+      if (!state.running) {
+        return;
+      }
+      state.running = false;
+      state.accumulator = 0;
+      updateButtonStates();
+      updateReadouts();
+    });
+
+    stepButton.addEventListener("click", () => {
+      state.running = false;
+      state.accumulator = 0;
+      updateButtonStates();
+      runMcmcStep();
+    });
+
+    resetButton.addEventListener("click", () => {
+      resetSimulation();
+    });
+
+    setControlLabels();
+    resetSimulation();
+    window.setInterval(advanceSimulation, SIMULATION_INTERVAL_MS);
+    frame();
+  </script>
+</body>
+</html>

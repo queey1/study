@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>微观随机，宏观确定</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --paper: rgba(255, 252, 245, 0.86);
+      --paper-strong: rgba(255, 251, 243, 0.95);
+      --ink: #1f2430;
+      --muted: #586172;
+      --accent: #d66b2d;
+      --accent-soft: rgba(214, 107, 45, 0.16);
+      --accent-2: #1d6c78;
+      --accent-2-soft: rgba(29, 108, 120, 0.16);
+      --border: rgba(31, 36, 48, 0.12);
+      --shadow: 0 18px 45px rgba(63, 43, 24, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(214, 107, 45, 0.28), transparent 32%),
+        radial-gradient(circle at 85% 15%, rgba(29, 108, 120, 0.22), transparent 28%),
+        linear-gradient(180deg, #efe4d2 0%, var(--bg) 46%, #e7dfd0 100%);
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      pointer-events: none;
+      border-radius: 999px;
+      filter: blur(8px);
+      opacity: 0.55;
+    }
+
+    body::before {
+      width: 360px;
+      height: 360px;
+      top: -110px;
+      right: -90px;
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    body::after {
+      width: 300px;
+      height: 300px;
+      bottom: -120px;
+      left: -80px;
+      background: rgba(29, 108, 120, 0.14);
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 24px auto 32px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero,
+    .panel,
+    .notes {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    .hero {
+      padding: 28px 28px 22px;
+      display: grid;
+      gap: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.36) 50%, transparent 100%);
+      transform: translateX(-100%);
+      animation: sheen 8s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes sheen {
+      0% { transform: translateX(-100%); }
+      45%, 100% { transform: translateX(100%); }
+    }
+
+    .eyebrow {
+      font-size: 0.82rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 5vw, 4.8rem);
+      line-height: 0.95;
+      margin: 0;
+      font-weight: 700;
+      max-width: 9ch;
+    }
+
+    .lead {
+      max-width: 70ch;
+      margin: 0;
+      font-size: 1.08rem;
+      line-height: 1.65;
+      color: var(--muted);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .hero-metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: var(--paper-strong);
+      border: 1px solid rgba(31, 36, 48, 0.09);
+      border-radius: 18px;
+      padding: 14px 16px;
+      transform: translateY(16px);
+      opacity: 0;
+      animation: rise 700ms ease forwards;
+    }
+
+    .metric-card:nth-child(2) { animation-delay: 90ms; }
+    .metric-card:nth-child(3) { animation-delay: 180ms; }
+
+    @keyframes rise {
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .metric-label {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .metric-value {
+      margin: 0;
+      font-size: clamp(1.45rem, 4vw, 2.2rem);
+      font-weight: 700;
+    }
+
+    .metric-note {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .controls-card {
+      background: linear-gradient(180deg, rgba(255, 251, 243, 0.98), rgba(247, 241, 232, 0.92));
+      border: 1px solid rgba(31, 36, 48, 0.08);
+      border-radius: 20px;
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .control-footnote {
+      margin: 0;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(29, 108, 120, 0.08);
+      border: 1px solid rgba(29, 108, 120, 0.12);
+      color: var(--muted);
+      line-height: 1.58;
+      font-size: 0.95rem;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      font-size: 0.98rem;
+    }
+
+    .control-header span:last-child {
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font: inherit;
+      cursor: pointer;
+      transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(31, 36, 48, 0.1);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: #fff9f4;
+    }
+
+    .secondary {
+      background: rgba(31, 36, 48, 0.08);
+      color: var(--ink);
+    }
+
+    .ghost {
+      background: rgba(29, 108, 120, 0.12);
+      color: var(--accent-2);
+    }
+
+    .panel {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    .panel p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .viz-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+      gap: 18px;
+    }
+
+    .canvas-card {
+      background: linear-gradient(180deg, rgba(255, 252, 246, 0.95), rgba(244, 238, 226, 0.96));
+      border-radius: 20px;
+      border: 1px solid rgba(31, 36, 48, 0.08);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    canvas {
+      width: 100%;
+      display: block;
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(242, 236, 224, 0.9));
+      border: 1px solid rgba(31, 36, 48, 0.08);
+    }
+
+    .caption {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mini-card {
+      background: var(--paper-strong);
+      border-radius: 16px;
+      padding: 12px 14px;
+      border: 1px solid rgba(31, 36, 48, 0.08);
+    }
+
+    .mini-card strong {
+      display: block;
+      font-size: 1.05rem;
+      margin-top: 4px;
+    }
+
+    .notes {
+      padding: 18px 20px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .note-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .note {
+      background: rgba(255, 252, 247, 0.86);
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid rgba(31, 36, 48, 0.07);
+      line-height: 1.58;
+    }
+
+    .note strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--accent-2);
+      font-size: 0.98rem;
+    }
+
+    .footer-line {
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .viz-grid,
+      .note-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-metric-row,
+      .mini-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        width: min(100vw - 18px, 1180px);
+        margin: 9px auto 18px;
+      }
+
+      .hero,
+      .panel,
+      .notes {
+        border-radius: 20px;
+      }
+
+      .hero,
+      .panel,
+      .notes,
+      .controls-card,
+      .canvas-card {
+        padding: 14px;
+      }
+
+      .hero-metric-row,
+      .mini-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .caption,
+      .panel-header {
+        flex-direction: column;
+        align-items: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Microscopic randomness / macroscopic order</p>
+      <div class="hero-grid">
+        <div>
+          <h1>二维随机游走</h1>
+          <p class="lead">
+            一个粒子在二维网格上随机游走。它每一步都会等概率选择上、下、左、右中的一个方向。
+          </p>
+        </div>
+        <div class="controls-card">
+          <div class="control-group">
+            <div class="control-header">
+              <span>每秒步数</span>
+              <span id="rateValue">6</span>
+            </div>
+            <input id="rateInput" type="range" min="1" max="40000" step="1" value="6" />
+          </div>
+
+          <p class="control-footnote">停止规则：粒子会一直运动，只有第一次重新走回原点时才会自动停下。</p>
+
+          <div class="button-row">
+            <button id="toggleButton" class="primary">暂停</button>
+            <button id="resetButton" class="secondary">重新开始</button>
+            <button id="predictButton" class="ghost">直接算出回原点总步数</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-metric-row">
+        <article class="metric-card">
+          <p class="metric-label">已走步数</p>
+          <p class="metric-value" id="totalParticles">0</p>
+          <p class="metric-note">每走一步，步数就加一</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">当前位置 / 原点</p>
+          <p class="metric-value" id="meanComparison">(0.00, 0.00) / (0, 0)</p>
+          <p class="metric-note">只追踪这一个粒子的坐标</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">离原点距离</p>
+          <p class="metric-value" id="distributionError">0.00</p>
+          <p class="metric-note">距离回到 0 时，本轮结束</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>单粒子的随机旅程</h2>
+          <p>左侧是当前粒子的完整路径，右侧是同一粒子走过格点的足迹热度。</p>
+        </div>
+        <p id="statusText">运行中：粒子每一步都随机，只有回到原点时才会自动停下。</p>
+      </div>
+
+      <div class="viz-grid">
+        <section class="canvas-card">
+          <canvas id="microCanvas" width="560" height="460"></canvas>
+          <div class="caption">
+            <span>实时轨迹：折线就是这个粒子从出发到当前的全部路径。</span>
+            <span id="sampleTrailText">粒子离开原点后会一直走，直到再次回到原点。</span>
+          </div>
+        </section>
+
+        <section class="canvas-card">
+          <canvas id="macroCanvas" width="560" height="460"></canvas>
+          <div class="caption">
+            <span>足迹热图：颜色越深，说明这个粒子走到该格点的次数越多。</span>
+            <span id="macroSummaryText">当前仍在寻找回原点的路径。</span>
+          </div>
+        </section>
+      </div>
+
+      <div class="mini-stats">
+        <div class="mini-card">当前速度<strong id="theoreticalSigma">6 步/秒</strong></div>
+        <div class="mini-card">最远离原点<strong id="actualSigma">0.00</strong></div>
+        <div class="mini-card">走过格点数<strong id="modeBin">1</strong></div>
+        <div class="mini-card">预计回原点总步数<strong id="centroidDistance">未计算</strong></div>
+      </div>
+    </section>
+
+    <section class="notes">
+      <div class="note-grid">
+        <article class="note">
+          <strong>看什么</strong>
+          盯住左边的单条折线。它会不断拐弯、折返和交叉，但你始终只是在看同一个粒子的完整路径。
+        </article>
+        <article class="note">
+          <strong>怎么试</strong>
+          先把速度调到 1 到 3 步/秒，肉眼跟着粒子移动；再把速度拉高，观察它虽然越来越乱，但仍然只会在回到原点时结束。
+        </article>
+        <article class="note">
+          <strong>什么时候停</strong>
+          本轮没有预设步数上限。粒子会一直走，直到它的当前位置重新变成 (0, 0)，页面才会自动停住并保留整条轨迹。
+        </article>
+      </div>
+      <p class="footer-line">
+        这个演示展示的是二维简单随机游走的一次单次试验：每一步都等概率选择上、下、左、右。因为只追踪一个粒子，所以你看到的不是平均分布，而是一条真实且完整的随机返回路径。
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const microCanvas = document.getElementById("microCanvas");
+    const macroCanvas = document.getElementById("macroCanvas");
+    const microCtx = microCanvas.getContext("2d");
+    const macroCtx = macroCanvas.getContext("2d");
+
+    const rateInput = document.getElementById("rateInput");
+    const toggleButton = document.getElementById("toggleButton");
+    const resetButton = document.getElementById("resetButton");
+    const predictButton = document.getElementById("predictButton");
+
+    const rateValue = document.getElementById("rateValue");
+    const totalParticles = document.getElementById("totalParticles");
+    const meanComparison = document.getElementById("meanComparison");
+    const distributionError = document.getElementById("distributionError");
+    const theoreticalSigma = document.getElementById("theoreticalSigma");
+    const actualSigma = document.getElementById("actualSigma");
+    const modeBin = document.getElementById("modeBin");
+    const centroidDistance = document.getElementById("centroidDistance");
+    const statusText = document.getElementById("statusText");
+    const macroSummaryText = document.getElementById("macroSummaryText");
+    const sampleTrailText = document.getElementById("sampleTrailText");
+
+    const numberFormat = new Intl.NumberFormat("zh-CN");
+    const SIMULATION_INTERVAL_MS = 50;
+    const PREDICTION_BATCH_SIZE = 20000;
+    const directions = [
+      { dx: 1, dy: 0 },
+      { dx: -1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: 0, dy: -1 },
+    ];
+
+    const state = {
+      running: true,
+      rate: Number(rateInput.value),
+      particle: null,
+      rng: null,
+      particleAccumulator: 0,
+      predictionInProgress: false,
+      predictionJobId: 0,
+      resumeAfterPrediction: false,
+      animationId: 0,
+    };
+
+    function generateSeed() {
+      if (window.crypto?.getRandomValues) {
+        const seedArray = new Uint32Array(1);
+        window.crypto.getRandomValues(seedArray);
+        return seedArray[0] || 0x12345678;
+      }
+
+      return (Date.now() >>> 0) || 0x12345678;
+    }
+
+    function createRng(seed) {
+      return { seed: seed >>> 0 || 0x12345678 };
+    }
+
+    function nextRandom(rng) {
+      let value = (rng.seed += 0x6D2B79F5);
+      value = Math.imul(value ^ (value >>> 15), value | 1);
+      value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+      return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    }
+
+    function nextDirectionIndex(rng = state.rng) {
+      return Math.floor(nextRandom(rng) * directions.length);
+    }
+
+    function createParticle() {
+      return {
+        x: 0,
+        y: 0,
+        stepCount: 0,
+        trail: [{ x: 0, y: 0 }],
+        visitedCounts: new Map([["0,0", 1]]),
+        farthestDistance: 0,
+        maxAbsCoordinate: 0,
+        returnedHome: false,
+        returnStep: null,
+        predictedReturnStep: null,
+      };
+    }
+
+    function resetSimulation() {
+      state.predictionJobId += 1;
+      state.predictionInProgress = false;
+      state.resumeAfterPrediction = false;
+      state.particle = createParticle();
+      state.rng = createRng(generateSeed());
+      state.running = true;
+      state.particleAccumulator = 0;
+      toggleButton.disabled = false;
+      toggleButton.textContent = "暂停";
+      predictButton.disabled = false;
+      predictButton.textContent = "直接算出回原点总步数";
+      updateReadouts();
+      drawMicro();
+      drawMacro();
+    }
+
+    function setControlLabels() {
+      rateValue.textContent = String(state.rate);
+      const particle = state.particle;
+      if (particle && particle.returnedHome) {
+        sampleTrailText.textContent = `本轮在第 ${particle.returnStep} 步回到原点，整条轨迹已保留。`;
+      } else if (state.predictionInProgress) {
+        sampleTrailText.textContent = "正在预演这条路径后续何时回到原点。";
+      } else if (particle && particle.predictedReturnStep !== null) {
+        const remainingSteps = Math.max(0, particle.predictedReturnStep - particle.stepCount);
+        sampleTrailText.textContent = `预计将在第 ${particle.predictedReturnStep} 步回原点，还需 ${remainingSteps} 步。`;
+      } else {
+        sampleTrailText.textContent = "粒子离开原点后会一直走，直到再次回到原点。";
+      }
+    }
+
+    function stepParticle() {
+      const particle = state.particle;
+      if (!particle || particle.returnedHome) {
+        return false;
+      }
+
+      const direction = directions[nextDirectionIndex()];
+      particle.x += direction.dx;
+      particle.y += direction.dy;
+      particle.stepCount += 1;
+      particle.trail.push({ x: particle.x, y: particle.y });
+
+      const positionKey = `${particle.x},${particle.y}`;
+      particle.visitedCounts.set(positionKey, (particle.visitedCounts.get(positionKey) ?? 0) + 1);
+      particle.farthestDistance = Math.max(particle.farthestDistance, Math.hypot(particle.x, particle.y));
+      particle.maxAbsCoordinate = Math.max(
+        particle.maxAbsCoordinate,
+        Math.abs(particle.x),
+        Math.abs(particle.y)
+      );
+
+      if (particle.x === 0 && particle.y === 0) {
+        particle.returnedHome = true;
+        particle.returnStep = particle.stepCount;
+        state.running = false;
+        toggleButton.disabled = true;
+        toggleButton.textContent = "已回原点";
+      }
+
+      return true;
+    }
+
+    function computeStats() {
+      const particle = state.particle ?? createParticle();
+
+      return {
+        stepCount: particle.stepCount,
+        currentX: particle.x,
+        currentY: particle.y,
+        distanceFromOrigin: Math.hypot(particle.x, particle.y),
+        speed: state.rate,
+        farthestDistance: particle.farthestDistance,
+        uniqueVisitedCount: particle.visitedCounts.size,
+        returnedHome: particle.returnedHome,
+        returnStep: particle.returnStep,
+        predictedReturnStep: particle.predictedReturnStep,
+        predictedRemainingSteps: particle.predictedReturnStep === null
+          ? null
+          : Math.max(0, particle.predictedReturnStep - particle.stepCount),
+        isRunning: state.running,
+      };
+    }
+
+    function updateReadouts() {
+      const stats = computeStats();
+
+      totalParticles.textContent = numberFormat.format(stats.stepCount);
+      meanComparison.textContent = `(${stats.currentX}, ${stats.currentY}) / (0, 0)`;
+      distributionError.textContent = stats.distanceFromOrigin.toFixed(2);
+      theoreticalSigma.textContent = `${stats.speed} 步/秒`;
+      actualSigma.textContent = stats.farthestDistance.toFixed(2);
+      modeBin.textContent = numberFormat.format(stats.uniqueVisitedCount);
+
+      if (stats.returnedHome) {
+        centroidDistance.textContent = numberFormat.format(stats.returnStep);
+        macroSummaryText.textContent = `粒子在第 ${stats.returnStep} 步回到原点，本轮轨迹已经完整保留。`;
+        statusText.textContent = `已完成：粒子在第 ${stats.returnStep} 步回到原点，本轮结束。`;
+      } else if (state.predictionInProgress) {
+        centroidDistance.textContent = "计算中...";
+        macroSummaryText.textContent = "正在预演当前这条随机路径后续何时回到原点。";
+        statusText.textContent = "计算中：正在沿着同一随机序列向后推演最终回原点的总步数。";
+      } else if (stats.predictedReturnStep !== null) {
+        centroidDistance.textContent = numberFormat.format(stats.predictedReturnStep);
+        macroSummaryText.textContent = `预计将在第 ${stats.predictedReturnStep} 步回到原点，还需 ${stats.predictedRemainingSteps} 步。`;
+
+        if (stats.isRunning) {
+          statusText.textContent = "运行中：当前路径的最终回原点总步数已经算出，动画会按同一路径继续前进。";
+        } else {
+          statusText.textContent = "已暂停：当前路径的最终回原点总步数已经算出，继续即可按同一路径走完。";
+        }
+      } else if (stats.isRunning) {
+        centroidDistance.textContent = "未计算";
+        macroSummaryText.textContent = `已走 ${stats.stepCount} 步，当前位置 (${stats.currentX}, ${stats.currentY})，离原点 ${stats.distanceFromOrigin.toFixed(2)}。`;
+        statusText.textContent = "运行中：粒子每一步都随机，只有回到原点时才会自动停下。";
+      } else {
+        centroidDistance.textContent = "未计算";
+        macroSummaryText.textContent = `当前停在 (${stats.currentX}, ${stats.currentY})，已走 ${stats.stepCount} 步。`;
+        statusText.textContent = "已暂停：你可以继续观察当前轨迹，或重新开始一轮新的随机游走。";
+      }
+
+      setControlLabels();
+    }
+
+    function clonePredictionState() {
+      const particle = state.particle ?? createParticle();
+
+      return {
+        x: particle.x,
+        y: particle.y,
+        stepCount: particle.stepCount,
+        rng: createRng(state.rng?.seed ?? generateSeed()),
+      };
+    }
+
+    function finishPrediction(jobId, finalStep) {
+      if (jobId !== state.predictionJobId || !state.particle) {
+        return;
+      }
+
+      state.predictionInProgress = false;
+      state.particle.predictedReturnStep = finalStep;
+      predictButton.disabled = false;
+      predictButton.textContent = "直接算出回原点总步数";
+
+      if (!state.particle.returnedHome) {
+        state.running = state.resumeAfterPrediction;
+        toggleButton.disabled = false;
+        toggleButton.textContent = state.running ? "暂停" : "继续";
+      }
+
+      updateReadouts();
+    }
+
+    function runPredictionBatch(jobId, simulatedState) {
+      if (jobId !== state.predictionJobId || !state.particle) {
+        return;
+      }
+
+      let processed = 0;
+
+      while (processed < PREDICTION_BATCH_SIZE) {
+        const direction = directions[nextDirectionIndex(simulatedState.rng)];
+        simulatedState.x += direction.dx;
+        simulatedState.y += direction.dy;
+        simulatedState.stepCount += 1;
+
+        if (simulatedState.x === 0 && simulatedState.y === 0) {
+          finishPrediction(jobId, simulatedState.stepCount);
+          return;
+        }
+
+        processed += 1;
+      }
+
+      window.setTimeout(() => runPredictionBatch(jobId, simulatedState), 0);
+    }
+
+    function predictReturnStep() {
+      const particle = state.particle;
+      if (!particle || state.predictionInProgress) {
+        return;
+      }
+
+      if (particle.returnedHome) {
+        particle.predictedReturnStep = particle.returnStep;
+        updateReadouts();
+        return;
+      }
+
+      state.predictionJobId += 1;
+      state.predictionInProgress = true;
+      state.resumeAfterPrediction = state.running;
+      state.running = false;
+      particle.predictedReturnStep = null;
+
+      toggleButton.disabled = true;
+      predictButton.disabled = true;
+      predictButton.textContent = "计算中...";
+      updateReadouts();
+
+      runPredictionBatch(state.predictionJobId, clonePredictionState());
+    }
+
+    function getGridLayout(canvas) {
+      const width = canvas.width;
+      const height = canvas.height;
+      const padding = 34;
+      const particle = state.particle ?? createParticle();
+      const worldSpan = Math.max(8, particle.maxAbsCoordinate + 3);
+      const minCellSize = 10;
+      const maxVisibleHalfSpan = Math.max(
+        8,
+        Math.floor(Math.min(width - padding * 2, height - padding * 2) / (minCellSize * 2))
+      );
+      const unitsPerCell = Math.max(1, Math.ceil(worldSpan / maxVisibleHalfSpan));
+      const span = Math.max(8, Math.ceil(worldSpan / unitsPerCell));
+      const cellSize = Math.max(4, Math.floor(Math.min(
+        (width - padding * 2) / (span * 2 + 1),
+        (height - padding * 2) / (span * 2 + 1)
+      )));
+      const originX = width / 2;
+      const originY = height / 2;
+
+      return {
+        width,
+        height,
+        span,
+        cellSize,
+        unitsPerCell,
+        originX,
+        originY,
+        left: originX - span * cellSize,
+        right: originX + span * cellSize,
+        top: originY - span * cellSize,
+        bottom: originY + span * cellSize,
+      };
+    }
+
+    function toCanvasPoint(layout, x, y) {
+      return {
+        x: layout.originX + (x / layout.unitsPerCell) * layout.cellSize,
+        y: layout.originY - (y / layout.unitsPerCell) * layout.cellSize,
+      };
+    }
+
+    function drawGrid(ctx, layout) {
+      ctx.strokeStyle = "rgba(31, 36, 48, 0.08)";
+      ctx.lineWidth = 1;
+
+      for (let index = -layout.span; index <= layout.span; index += 1) {
+        const x = layout.originX + index * layout.cellSize;
+        const y = layout.originY + index * layout.cellSize;
+
+        ctx.beginPath();
+        ctx.moveTo(x, layout.top);
+        ctx.lineTo(x, layout.bottom);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(layout.left, y);
+        ctx.lineTo(layout.right, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "rgba(31, 36, 48, 0.28)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(layout.left, layout.originY);
+      ctx.lineTo(layout.right, layout.originY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(layout.originX, layout.top);
+      ctx.lineTo(layout.originX, layout.bottom);
+      ctx.stroke();
+    }
+
+    function drawOriginMarker(ctx, layout) {
+      ctx.fillStyle = "rgba(29, 108, 120, 0.96)";
+      ctx.beginPath();
+      ctx.arc(layout.originX, layout.originY, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(31, 36, 48, 0.72)";
+      ctx.font = '13px Georgia';
+      ctx.fillText("原点", layout.originX + 10, layout.originY - 10);
+      ctx.fillText("x", layout.right + 8, layout.originY + 4);
+      ctx.fillText("y", layout.originX + 6, layout.top - 8);
+
+      if (layout.unitsPerCell > 1) {
+        ctx.fillText(`每格 = ${layout.unitsPerCell} 步`, layout.left, layout.top - 8);
+      }
+    }
+
+    function drawMicro() {
+      const width = microCanvas.width;
+      const height = microCanvas.height;
+      const layout = getGridLayout(microCanvas);
+      const particle = state.particle ?? createParticle();
+      microCtx.clearRect(0, 0, width, height);
+      drawGrid(microCtx, layout);
+
+      microCtx.strokeStyle = "rgba(214, 107, 45, 0.88)";
+      microCtx.lineWidth = 2.8;
+      microCtx.beginPath();
+
+      const startPoint = toCanvasPoint(layout, particle.trail[0].x, particle.trail[0].y);
+      microCtx.moveTo(startPoint.x, startPoint.y);
+
+      particle.trail.slice(1).forEach((point) => {
+        const canvasPoint = toCanvasPoint(layout, point.x, point.y);
+        microCtx.lineTo(canvasPoint.x, canvasPoint.y);
+      });
+
+      microCtx.stroke();
+
+      const currentPoint = toCanvasPoint(layout, particle.x, particle.y);
+      microCtx.fillStyle = "rgba(214, 107, 45, 0.96)";
+      microCtx.beginPath();
+      microCtx.arc(currentPoint.x, currentPoint.y, 5.2, 0, Math.PI * 2);
+      microCtx.fill();
+
+      if (particle.returnedHome && particle.stepCount > 0) {
+        microCtx.strokeStyle = "rgba(29, 108, 120, 0.95)";
+        microCtx.lineWidth = 2.4;
+        microCtx.beginPath();
+        microCtx.arc(currentPoint.x, currentPoint.y, 10, 0, Math.PI * 2);
+        microCtx.stroke();
+      }
+
+      drawOriginMarker(microCtx, layout);
+
+      microCtx.fillStyle = "rgba(31, 36, 48, 0.58)";
+      microCtx.font = '13px Georgia';
+      microCtx.fillText(`当前粒子已走 ${particle.stepCount} 步。`, 28, height - 14);
+    }
+
+    function drawMacro() {
+      const width = macroCanvas.width;
+      const height = macroCanvas.height;
+      const layout = getGridLayout(macroCanvas);
+      const particle = state.particle ?? createParticle();
+      const maxCount = Math.max(1, ...particle.visitedCounts.values());
+
+      macroCtx.clearRect(0, 0, width, height);
+      drawGrid(macroCtx, layout);
+
+      for (const [key, count] of particle.visitedCounts.entries()) {
+        const [xText, yText] = key.split(",");
+        const x = Number(xText);
+        const y = Number(yText);
+        const { x: canvasX, y: canvasY } = toCanvasPoint(layout, x, y);
+        const intensity = Math.sqrt(count / maxCount);
+
+        macroCtx.fillStyle = `rgba(29, 108, 120, ${0.12 + intensity * 0.82})`;
+        const heatCellSize = Math.max(2, layout.cellSize - 2);
+        macroCtx.fillRect(
+          canvasX - heatCellSize / 2,
+          canvasY - heatCellSize / 2,
+          heatCellSize,
+          heatCellSize
+        );
+      }
+
+      macroCtx.strokeStyle = "rgba(214, 107, 45, 0.72)";
+      macroCtx.lineWidth = 1.6;
+      macroCtx.beginPath();
+      const firstPoint = toCanvasPoint(layout, particle.trail[0].x, particle.trail[0].y);
+      macroCtx.moveTo(firstPoint.x, firstPoint.y);
+      particle.trail.slice(1).forEach((point) => {
+        const canvasPoint = toCanvasPoint(layout, point.x, point.y);
+        macroCtx.lineTo(canvasPoint.x, canvasPoint.y);
+      });
+      macroCtx.stroke();
+
+      const currentPoint = toCanvasPoint(layout, particle.x, particle.y);
+      macroCtx.fillStyle = "rgba(214, 107, 45, 0.96)";
+      macroCtx.beginPath();
+      macroCtx.arc(currentPoint.x, currentPoint.y, 4.8, 0, Math.PI * 2);
+      macroCtx.fill();
+
+      drawOriginMarker(macroCtx, layout);
+
+      macroCtx.fillStyle = "rgba(31, 36, 48, 0.68)";
+      macroCtx.font = '12px Georgia';
+      macroCtx.fillText("蓝色格点：访问次数越多，颜色越深", 24, 18);
+      macroCtx.fillText("橙色线：单个粒子的完整路径", 24, 34);
+      macroCtx.fillText("橙色点：粒子的当前位置", 24, 50);
+    }
+
+    function advanceSimulation() {
+      if (state.running) {
+        state.particleAccumulator += (state.rate * SIMULATION_INTERVAL_MS) / 1000;
+        let stepCount = Math.floor(state.particleAccumulator);
+
+        if (stepCount > 0) {
+          state.particleAccumulator -= stepCount;
+          let changed = false;
+
+          while (stepCount > 0 && state.running) {
+            changed = stepParticle() || changed;
+            stepCount -= 1;
+          }
+
+          if (changed) {
+            updateReadouts();
+          }
+        }
+      }
+    }
+
+    function frame() {
+      drawMicro();
+      drawMacro();
+      state.animationId = window.requestAnimationFrame(frame);
+    }
+
+    rateInput.addEventListener("input", (event) => {
+      state.rate = Number(event.target.value);
+      setControlLabels();
+      updateReadouts();
+    });
+
+    toggleButton.addEventListener("click", () => {
+      if (state.predictionInProgress || state.particle?.returnedHome) {
+        return;
+      }
+
+      state.running = !state.running;
+      toggleButton.textContent = state.running ? "暂停" : "继续";
+      updateReadouts();
+    });
+
+    resetButton.addEventListener("click", () => {
+      resetSimulation();
+    });
+
+    predictButton.addEventListener("click", () => {
+      predictReturnStep();
+    });
+
+    setControlLabels();
+    resetSimulation();
+    window.setInterval(advanceSimulation, SIMULATION_INTERVAL_MS);
+    frame();
+  </script>
+</body>
+</html>
