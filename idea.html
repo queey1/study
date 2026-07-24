@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#e9e4d8" />
+  <title>IDEA / 未命名宇宙</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper: #e9e4d8;
+      --ink: #20241e;
+      --acid: #c8f84a;
+      --sun: #ff7549;
+      --sky: #67c9f1;
+      --line: rgba(32, 36, 30, .23);
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--paper); }
+    body { margin: 0; min-width: 320px; background: var(--paper); color: var(--ink); font-family: Manrope, sans-serif; }
+    button, input { font: inherit; }
+    button { color: inherit; }
+
+    .page {
+      position: relative;
+      isolation: isolate;
+      min-height: 100svh;
+      overflow: hidden;
+      background-color: var(--paper);
+      background-image: radial-gradient(rgba(32, 36, 30, .16) .65px, transparent .65px);
+      background-size: 13px 13px;
+    }
+
+    #universe { position: absolute; z-index: -1; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 24px clamp(20px, 4vw, 62px); }
+    .logo { display: flex; align-items: center; gap: 11px; color: var(--ink); font: 500 12px/1 "DM Mono", monospace; letter-spacing: .12em; text-decoration: none; }
+    .logo-mark { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--ink); border-radius: 50%; }
+    .logo-mark::after { content: ""; width: 9px; height: 9px; background: var(--sun); border-radius: 50%; box-shadow: 7px -4px 0 -2px var(--acid); }
+    .status { display: flex; align-items: center; gap: 8px; font: 500 10px/1 "DM Mono", monospace; letter-spacing: .1em; }
+    .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 0 5px rgba(200, 248, 74, .25); animation: breathe 1.8s ease-in-out infinite; }
+
+    main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(270px, 348px); gap: clamp(30px, 6vw, 104px); align-items: end; min-height: calc(100svh - 77px); padding: clamp(52px, 10vh, 128px) clamp(20px, 8vw, 132px) 112px; }
+    .manifesto { max-width: 800px; }
+    .eyebrow { display: flex; align-items: center; gap: 11px; margin: 0 0 20px; color: #61711b; font: 500 11px/1 "DM Mono", monospace; letter-spacing: .12em; }
+    .eyebrow::before { content: ""; width: 34px; height: 1px; background: currentColor; }
+    h1 { max-width: 775px; margin: 0; font-family: Fraunces, serif; font-size: clamp(54px, 8.35vw, 126px); font-weight: 700; line-height: .83; letter-spacing: 0; }
+    h1 span { display: block; color: var(--sun); font-style: italic; transform: translateX(clamp(10px, 3vw, 52px)); }
+    .caption { max-width: 450px; margin: 30px 0 0; font-size: 14px; line-height: 1.7; }
+
+    .seed-box { position: relative; padding: 21px; border: 1px solid var(--ink); background: rgba(233, 228, 216, .71); box-shadow: 8px 8px 0 var(--ink); backdrop-filter: blur(8px); transform: rotate(1.2deg); }
+    .seed-box::before { content: "想法试管"; position: absolute; top: -12px; left: 18px; padding: 0 7px; background: var(--paper); font: 500 10px/1 "DM Mono", monospace; letter-spacing: .1em; }
+    .seed-box p { margin: 0 0 16px; font: 500 12px/1.55 "DM Mono", monospace; }
+    .seed-row { display: flex; border-bottom: 1px solid var(--ink); }
+    #idea-input { width: 100%; min-width: 0; padding: 9px 0; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 15px; }
+    #idea-input::placeholder { color: rgba(32, 36, 30, .56); }
+    .spark { display: grid; place-items: center; flex: none; width: 39px; height: 39px; margin: 0 -1px -1px 8px; border: 1px solid var(--ink); border-radius: 50%; background: var(--acid); cursor: pointer; transition: transform 180ms ease, background 180ms ease; }
+    .spark:hover { background: var(--sun); transform: rotate(25deg) scale(1.08); }
+    .spark svg { width: 18px; height: 18px; }
+    .instruction { margin: 16px 0 0; color: rgba(32, 36, 30, .7); font: 400 10px/1.5 "DM Mono", monospace; letter-spacing: .06em; }
+
+    .bottom { position: absolute; right: clamp(20px, 4vw, 62px); bottom: 24px; left: clamp(20px, 4vw, 62px); display: flex; justify-content: space-between; gap: 18px; align-items: end; }
+    .note { max-width: 258px; margin: 0; font: 400 10px/1.45 "DM Mono", monospace; letter-spacing: .04em; }
+    .controls { display: flex; gap: 8px; }
+    .control { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--ink); border-radius: 50%; background: rgba(233, 228, 216, .85); cursor: pointer; transition: transform 180ms ease, background 180ms ease; }
+    .control:hover { background: var(--sky); transform: translateY(-3px); }
+    .control svg { width: 16px; height: 16px; }
+    .control[aria-pressed="true"] { background: var(--sun); }
+    .seed-count { position: absolute; right: 36%; bottom: 31px; color: rgba(32, 36, 30, .65); font: 500 10px/1 "DM Mono", monospace; letter-spacing: .12em; }
+
+    @keyframes breathe { 50% { transform: scale(.55); box-shadow: 0 0 0 9px rgba(200, 248, 74, .09); } }
+    @media (max-width: 700px) {
+      .topbar { padding-top: 19px; }
+      .status { font-size: 9px; }
+      main { grid-template-columns: 1fr; align-content: center; min-height: calc(100svh - 70px); padding: 38px 25px 120px; }
+      h1 { font-size: clamp(52px, 18vw, 86px); }
+      .caption { margin-top: 25px; }
+      .seed-box { width: min(100%, 348px); justify-self: end; margin-top: 12px; }
+      .bottom { bottom: 18px; align-items: center; }
+      .note { max-width: 190px; font-size: 9px; }
+      .seed-count { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <canvas id="universe" aria-label="可互动的想法星图"></canvas>
+    <header class="topbar">
+      <a class="logo" href="#top" aria-label="IDEA 首页"><span class="logo-mark"></span>IDEA / 00</a>
+      <span class="status">宇宙正在听</span>
+    </header>
+    <main id="top">
+      <section class="manifesto">
+        <p class="eyebrow">给尚未存在的事物命名</p>
+        <h1>不是灵感。<span>是一个入口。</span></h1>
+        <p class="caption">每一个好点子都像一扇忘了上锁的门。把一句模糊的念头放进这里，看它长出自己的重力、轨道与意外的同伴。</p>
+      </section>
+      <section class="seed-box" aria-labelledby="seed-title">
+        <p id="seed-title">把一个想法丢进宇宙</p>
+        <div class="seed-row">
+          <input id="idea-input" type="text" maxlength="52" autocomplete="off" placeholder="例如：会做梦的红绿灯" aria-label="输入一个想法" />
+          <button class="spark" id="spark" type="button" aria-label="生成想法星系" title="生成星系">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m12 2 1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5L12 2Z"/><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></svg>
+          </button>
+        </div>
+        <p class="instruction">回车点火 / 点击空白处播种</p>
+      </section>
+    </main>
+    <footer class="bottom">
+      <p class="note">没有“正确”的开始。只有一个尚未被认真对待的念头。</p>
+      <span class="seed-count" id="seed-count">07 个星系正在漂流</span>
+      <div class="controls">
+        <button class="control" id="sound" type="button" aria-label="切换声音" aria-pressed="false" title="切换声音">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+        </button>
+        <button class="control" id="clear" type="button" aria-label="清除新生星系" title="清除新生星系">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14"/></svg>
+        </button>
+      </div>
+    </footer>
+  </div>
+  <script>
+    const canvas = document.querySelector('#universe');
+    const context = canvas.getContext('2d');
+    const input = document.querySelector('#idea-input');
+    const count = document.querySelector('#seed-count');
+    const sound = document.querySelector('#sound');
+    const colorPool = ['#ff7549', '#c8f84a', '#67c9f1', '#20241e'];
+    let width = 0;
+    let height = 0;
+    let galaxyCount = 7;
+    let muted = true;
+    const galaxies = [];
+
+    function random(min, max) { return Math.random() * (max - min) + min; }
+    function makeGalaxy(x = random(width * .08, width * .92), y = random(height * .08, height * .92), label = '') {
+      const particles = Array.from({ length: 18 + Math.floor(Math.random() * 16) }, (_, index) => ({
+        angle: random(0, Math.PI * 2), radius: random(10, 46), speed: random(.0015, .006) * (index % 2 ? 1 : -1), size: random(1.2, 3.8), color: colorPool[index % colorPool.length]
+      }));
+      galaxies.push({ x, y, label, particles, phase: random(0, Math.PI * 2), born: performance.now() });
+    }
+    function resize() {
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
+      canvas.width = width * ratio;
+      canvas.height = height * ratio;
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      if (!galaxies.length) for (let index = 0; index < 7; index += 1) makeGalaxy();
+    }
+    function draw(time) {
+      context.clearRect(0, 0, width, height);
+      galaxies.forEach((galaxy, galaxyIndex) => {
+        const pulse = 1 + Math.sin(time * .001 + galaxy.phase) * .14;
+        galaxy.particles.forEach((particle, index) => {
+          const angle = particle.angle + time * particle.speed;
+          const radius = particle.radius * pulse;
+          const x = galaxy.x + Math.cos(angle) * radius;
+          const y = galaxy.y + Math.sin(angle) * radius * .52;
+          context.beginPath();
+          context.arc(x, y, particle.size, 0, Math.PI * 2);
+          context.fillStyle = particle.color;
+          context.globalAlpha = .26 + ((index + galaxyIndex) % 4) * .14;
+          context.fill();
+        });
+        context.globalAlpha = .9;
+        context.beginPath();
+        context.arc(galaxy.x, galaxy.y, 3.6 + Math.sin(time * .002 + galaxy.phase), 0, Math.PI * 2);
+        context.fillStyle = '#20241e';
+        context.fill();
+        if (galaxy.label) {
+          context.fillStyle = '#20241e';
+          context.font = '10px DM Mono, monospace';
+          context.fillText(galaxy.label.toUpperCase(), galaxy.x + 12, galaxy.y - 10);
+        }
+      });
+      context.globalAlpha = 1;
+      requestAnimationFrame(draw);
+    }
+    function updateCount() { count.textContent = `${String(galaxyCount).padStart(2, '0')} 个星系正在漂流`; }
+    function plantIdea(x, y, label = '') {
+      makeGalaxy(x, y, label);
+      galaxyCount += 1;
+      updateCount();
+    }
+    function ignite() {
+      const label = input.value.trim() || '未命名想法';
+      plantIdea(random(width * .26, width * .72), random(height * .33, height * .7), label.slice(0, 16));
+      input.value = '';
+      input.placeholder = '已经在宇宙里发光了';
+      if (!muted && navigator.vibrate) navigator.vibrate(20);
+    }
+
+    document.querySelector('#spark').addEventListener('click', ignite);
+    input.addEventListener('keydown', (event) => { if (event.key === 'Enter') ignite(); });
+    canvas.addEventListener('pointerdown', (event) => plantIdea(event.clientX, event.clientY, '新生')); 
+    document.querySelector('#clear').addEventListener('click', () => {
+      galaxies.splice(7);
+      galaxyCount = 7;
+      updateCount();
+    });
+    sound.addEventListener('click', () => {
+      muted = !muted;
+      sound.setAttribute('aria-pressed', String(!muted));
+      sound.title = muted ? '切换声音' : '声音已开启';
+    });
+    window.addEventListener('resize', resize);
+    resize();
+    updateCount();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

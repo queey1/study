@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TODO</title>
+  <style>
+    :root {
+      --ink: #302628;
+      --muted: #7f6a70;
+      --paper: rgba(255, 252, 247, 0.9);
+      --paper-solid: #fffaf4;
+      --line: rgba(71, 50, 48, 0.14);
+      --rose: #d84b68;
+      --rose-dark: #ab304d;
+      --peach: #ffb58f;
+      --mint: #87bfa4;
+      --gold: #d5a34d;
+      --blue: #6b91bf;
+      --shadow: 0 24px 60px rgba(89, 49, 53, 0.18);
+      --radius: 18px;
+      --font-title: "Yu Mincho", "STSong", Georgia, serif;
+      --font-body: "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: var(--font-body);
+      background:
+        linear-gradient(120deg, rgba(255, 247, 232, 0.86), rgba(255, 218, 220, 0.78)),
+        var(--custom-bg, radial-gradient(circle at top left, #ffd7b8 0, transparent 34%), linear-gradient(135deg, #fff3e0, #f6d0d8 55%, #c7dfd3));
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .ambient {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .ambient span {
+      position: absolute;
+      display: block;
+      color: rgba(216, 75, 104, 0.34);
+      font-family: Georgia, serif;
+      font-size: var(--size, 18px);
+      line-height: 1;
+      text-shadow: 0 5px 14px rgba(171, 48, 77, 0.16);
+      opacity: 0;
+      animation: drift-heart var(--duration, 13s) var(--delay, 0s) ease-in-out infinite;
+    }
+
+    .ambient .particle {
+      width: var(--size, 10px);
+      height: var(--size, 10px);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.58);
+      box-shadow: 0 4px 12px rgba(216, 75, 104, 0.14);
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      padding: 28px clamp(14px, 3vw, 34px) 40px;
+      backdrop-filter: saturate(112%);
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .hero-main, .panel, .dialog-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero-main {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(22px, 4vw, 38px);
+      animation: breathe 6s ease-in-out infinite;
+    }
+
+    .corner-menu {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 5;
+    }
+
+    .corner-menu[open] .menu-trigger {
+      background: rgba(255, 245, 247, 0.94);
+      color: var(--rose-dark);
+      box-shadow: 0 12px 22px rgba(89, 49, 53, 0.12);
+    }
+
+    .menu-trigger {
+      list-style: none;
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(216, 75, 104, 0.16);
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--ink);
+      cursor: pointer;
+      user-select: none;
+      font-size: 24px;
+      line-height: 1;
+      backdrop-filter: blur(16px);
+    }
+
+    .menu-trigger::-webkit-details-marker { display: none; }
+
+    .menu-popover {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      width: 172px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 251, 247, 0.94);
+      box-shadow: 0 18px 40px rgba(89, 49, 53, 0.16);
+      backdrop-filter: blur(18px);
+    }
+
+    .menu-item {
+      width: 100%;
+      min-height: 38px;
+      border: 0;
+      border-radius: 12px;
+      padding: 8px 10px;
+      text-align: left;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    .menu-item:hover {
+      background: rgba(255, 243, 245, 0.92);
+    }
+
+    .hero-main::before {
+      content: "";
+      position: absolute;
+      inset: auto -60px -90px auto;
+      width: 250px;
+      height: 250px;
+      background: conic-gradient(from 30deg, rgba(216, 75, 104, 0.24), rgba(255, 181, 143, 0.22), rgba(135, 191, 164, 0.18), rgba(216, 75, 104, 0.24));
+      border-radius: 42% 58% 48% 52%;
+      filter: blur(2px);
+      transform: rotate(-12deg);
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      inset: 18px auto auto -48px;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0));
+      pointer-events: none;
+    }
+
+    .kicker {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+      color: var(--rose-dark);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .kicker span {
+      display: inline-grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      color: white;
+      background: var(--rose);
+    }
+
+    h1 {
+      position: relative;
+      margin: 0;
+      font-family: var(--font-title);
+      font-size: clamp(36px, 7vw, 78px);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      position: relative;
+      max-width: 620px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 24px;
+      max-width: 620px;
+    }
+
+    .stat {
+      min-height: 86px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.54);
+      animation: gentle-bob 4.5s ease-in-out infinite;
+    }
+
+    .stat:nth-child(2) { animation-delay: -1.5s; }
+    .stat:nth-child(3) { animation-delay: -3s; }
+
+    .stat strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1;
+      color: var(--rose-dark);
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .btn {
+      min-height: 42px;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 15px;
+      color: white;
+      background: var(--rose);
+      box-shadow: 0 10px 24px rgba(216, 75, 104, 0.24);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(216, 75, 104, 0.28); }
+    .btn.secondary { color: var(--ink); background: rgba(255,255,255,0.72); border: 1px solid var(--line); box-shadow: none; }
+    .btn.ghost { color: var(--rose-dark); background: transparent; border: 1px solid rgba(216, 75, 104, 0.28); box-shadow: none; }
+    .btn.small { min-height: 34px; padding: 7px 12px; font-size: 13px; }
+    .btn.danger { background: #b44a42; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 16px;
+      animation: breathe 7s ease-in-out infinite;
+    }
+
+    .layout > .panel { animation-delay: -2.4s; }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) repeat(3, 150px) auto;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .toolbar.hidden {
+      display: none;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+
+    .category-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .category-chip {
+      min-height: 34px;
+      border: 1px solid rgba(216, 75, 104, 0.14);
+      border-radius: 999px;
+      padding: 7px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    .category-chip.active {
+      color: var(--rose-dark);
+      background: rgba(255, 244, 246, 0.92);
+      border-color: rgba(216, 75, 104, 0.28);
+      box-shadow: 0 8px 18px rgba(89, 49, 53, 0.08);
+    }
+
+    .field, .select, textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 10px 12px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.72);
+      outline: none;
+    }
+
+    textarea { min-height: 94px; resize: vertical; }
+    .field:focus, .select:focus, textarea:focus { border-color: rgba(216, 75, 104, 0.5); box-shadow: 0 0 0 3px rgba(216, 75, 104, 0.11); }
+
+    .categories {
+      display: grid;
+      gap: 9px;
+      margin: 12px 0 16px;
+    }
+
+    .cat {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 20px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      padding: 11px 10px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.5);
+      text-align: left;
+    }
+
+    .cat.active {
+      border-color: rgba(216, 75, 104, 0.28);
+      background: rgba(255, 245, 247, 0.92);
+      box-shadow: 0 10px 24px rgba(158, 74, 83, 0.12);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--cat-color, var(--rose));
+    }
+
+    .cat small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .panel-title h2, .panel-title h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .list-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .list-head h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .cards {
+      display: grid;
+      gap: 12px;
+    }
+
+    .inline-create {
+      margin-bottom: 12px;
+      padding: 14px;
+      border: 1px solid rgba(216, 75, 104, 0.16);
+      border-radius: 18px;
+      background: rgba(255, 249, 246, 0.72);
+      box-shadow: 0 10px 24px rgba(89, 49, 53, 0.08);
+    }
+
+    .inline-create-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .inline-create-head strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .inline-create-head span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .inline-create-form {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .inline-create-form textarea {
+      min-height: 88px;
+    }
+
+    .inline-create-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .task-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--cat-color, var(--rose));
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.68);
+      animation: card-arrive 0.42s ease both;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .task-card:hover { transform: translateY(-1px); box-shadow: 0 14px 26px rgba(89, 49, 53, 0.11); }
+    .task-card.done { opacity: 0.66; }
+    .task-card.done .task-title { text-decoration: line-through; }
+
+    .task-card::after {
+      content: "";
+      position: absolute;
+      inset: auto 16px 0 16px;
+      height: 24px;
+      background: radial-gradient(circle at center, rgba(216, 75, 104, 0.08), rgba(216, 75, 104, 0));
+      pointer-events: none;
+    }
+
+    .check {
+      width: 24px;
+      height: 24px;
+      border: 2px solid rgba(216, 75, 104, 0.42);
+      border-radius: 8px;
+      background: white;
+      color: white;
+      display: grid;
+      place-items: center;
+      margin-top: 2px;
+    }
+
+    .task-card.done .check { background: var(--mint); border-color: var(--mint); }
+
+    .task-title {
+      margin: 0 0 6px;
+      font-size: 17px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: rgba(255, 242, 226, 0.88);
+      border: 1px solid rgba(127, 106, 112, 0.12);
+    }
+
+    .pill.high { color: #9f332f; background: rgba(255, 226, 221, 0.92); }
+    .pill.medium { color: #8a6220; background: rgba(255, 241, 207, 0.92); }
+    .pill.low { color: #39725c; background: rgba(224, 244, 234, 0.92); }
+
+    .note {
+      margin-top: 9px;
+      color: #604f53;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .subtasks {
+      display: grid;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .subtask {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 9px;
+      border-radius: 11px;
+      background: rgba(255, 250, 244, 0.82);
+      border: 1px solid rgba(127, 106, 112, 0.1);
+      font-size: 13px;
+    }
+
+    .subtask.done span { text-decoration: line-through; color: var(--muted); }
+
+    .task-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.72);
+      color: var(--ink);
+    }
+
+    .empty {
+      padding: 38px 18px;
+      text-align: center;
+      border: 1px dashed rgba(127, 106, 112, 0.34);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.48);
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .dialog {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(54, 37, 39, 0.28);
+    }
+
+    .dialog.open { display: grid; }
+
+    .dialog-card {
+      width: min(720px, 100%);
+      max-height: min(86vh, 780px);
+      overflow: auto;
+      padding: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-grid .full { grid-column: 1 / -1; }
+    label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+    label strong { color: var(--ink); font-size: 14px; }
+
+    .subtask-editor {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .hidden { display: none !important; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      z-index: 30;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: white;
+      background: rgba(48, 38, 40, 0.9);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .file-row { display: grid; gap: 9px; }
+    .fineprint { color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+    @keyframes drift-heart {
+      0%, 100% { opacity: 0; transform: translate3d(0, 14px, 0) rotate(-8deg) scale(0.85); }
+      15%, 82% { opacity: 0.82; }
+      50% { transform: translate3d(var(--drift, 22px), -42px, 0) rotate(10deg) scale(1); }
+    }
+
+    @keyframes gentle-bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    @keyframes breathe {
+      0%, 100% { box-shadow: var(--shadow); }
+      50% { box-shadow: 0 28px 66px rgba(89, 49, 53, 0.22); }
+    }
+
+    @keyframes card-arrive {
+      from { opacity: 0; transform: translateY(7px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes done-bloom {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(135, 191, 164, 0.12); transform: scale(1); }
+      50% { box-shadow: 0 0 0 8px rgba(135, 191, 164, 0); transform: scale(1.04); }
+    }
+
+    @keyframes float-poster {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+    }
+
+    @media (max-width: 900px) {
+      .hero, .layout { grid-template-columns: 1fr; }
+      .toolbar { grid-template-columns: 1fr 1fr 1fr; }
+      .toolbar .field { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 560px) {
+      body {
+        background:
+          linear-gradient(145deg, rgba(255, 246, 232, 0.78), rgba(255, 220, 226, 0.66)),
+          radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.74), transparent 30%),
+          linear-gradient(135deg, #fff1de, #f9d6db 55%, #d3e6de);
+      }
+
+      .ambient {
+        transform: scale(1.08);
+        filter: saturate(118%);
+      }
+
+      .ambient span {
+        color: rgba(216, 75, 104, 0.44);
+        text-shadow: 0 8px 20px rgba(171, 48, 77, 0.24);
+      }
+
+      .ambient span:nth-child(1) { left: 2% !important; top: 10% !important; --size: 28px; }
+      .ambient span:nth-child(2) { left: 10% !important; top: 74% !important; --size: 10px; }
+      .ambient span:nth-child(3) { left: 18% !important; top: 32% !important; --size: 20px; }
+      .ambient span:nth-child(4) { left: 33% !important; top: 6% !important; --size: 12px; }
+      .ambient span:nth-child(5) { left: 80% !important; top: 70% !important; --size: 30px; }
+      .ambient span:nth-child(6) { left: 61% !important; top: 24% !important; --size: 10px; }
+      .ambient span:nth-child(7) { left: 74% !important; top: 8% !important; --size: 22px; }
+      .ambient span:nth-child(8) { left: 86% !important; top: 82% !important; --size: 14px; }
+      .ambient span:nth-child(9) { left: 88% !important; top: 38% !important; --size: 28px; }
+      .ambient span:nth-child(10) { left: 5% !important; top: 46% !important; --size: 24px; }
+      .ambient span:nth-child(11) { left: 26% !important; top: 86% !important; --size: 16px; }
+      .ambient span:nth-child(12) { left: 45% !important; top: 14% !important; --size: 12px; }
+      .ambient span:nth-child(13) { left: 63% !important; top: 58% !important; --size: 26px; }
+      .ambient span:nth-child(14) { left: 94% !important; top: 18% !important; --size: 14px; }
+
+      .app { padding: 14px 12px 34px; }
+      .shell { max-width: 430px; }
+      .hero { gap: 0; margin-bottom: 18px; }
+      .layout { gap: 12px; }
+      .hero-main, .panel, .dialog-card {
+        border-radius: 20px;
+        background: rgba(255, 252, 247, 0.76);
+        box-shadow: 0 16px 34px rgba(89, 49, 53, 0.14);
+      }
+
+      .hero-main {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 330px;
+        padding: 58px 18px 20px;
+        background:
+          linear-gradient(180deg, rgba(255, 250, 245, 0.84), rgba(255, 245, 247, 0.62)),
+          rgba(255, 252, 247, 0.76);
+      }
+
+      .corner-menu {
+        top: 14px;
+        right: 14px;
+      }
+
+      .menu-trigger {
+        width: 34px;
+        height: 34px;
+        font-size: 22px;
+      }
+
+      .menu-popover {
+        width: 156px;
+        padding: 8px;
+        border-radius: 14px;
+      }
+
+      .hero-main::before {
+        inset: auto -8px -36px auto;
+        width: 220px;
+        height: 220px;
+        opacity: 0.92;
+      }
+
+      .hero-main::after {
+        inset: 2px auto auto -26px;
+        width: 118px;
+        height: 118px;
+      }
+
+      .kicker {
+        margin-bottom: 12px;
+        font-size: 11px;
+      }
+
+      .kicker span {
+        width: 24px;
+        height: 24px;
+      }
+
+      h1 {
+        max-width: 5ch;
+        font-size: clamp(34px, 14vw, 58px);
+        text-shadow: 0 10px 22px rgba(255, 255, 255, 0.34);
+      }
+
+      .subtitle {
+        margin-top: 14px;
+        max-width: 17em;
+        padding-right: 26px;
+        font-size: 13px;
+        line-height: 1.72;
+        display: -webkit-box;
+        overflow: hidden;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+      }
+
+      .stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 18px;
+      }
+
+      .stat {
+        min-height: 72px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.6);
+      }
+
+      .stat strong { font-size: 22px; }
+      .stat span { margin-top: 6px; font-size: 11px; line-height: 1.35; }
+
+      .panel { padding: 14px; }
+      .panel-title { margin-bottom: 8px; }
+      .panel-title h2, .panel-title h3 { font-size: 17px; }
+
+      .layout > .panel {
+        background: rgba(255, 252, 247, 0.62);
+        box-shadow: 0 12px 26px rgba(89, 49, 53, 0.1);
+      }
+
+      .layout > .panel:first-child {
+        opacity: 0.92;
+      }
+
+      .layout > .panel:last-child {
+        background: rgba(255, 252, 247, 0.68);
+      }
+
+      .category-strip {
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+
+      .category-chip {
+        min-height: 32px;
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .toolbar > :first-child {
+        grid-column: 1 / -1;
+      }
+
+      .field, .select, textarea {
+        min-height: 40px;
+        padding: 9px 11px;
+      }
+
+      .toolbar-actions .btn {
+        width: 100%;
+      }
+
+      .inline-create {
+        padding: 12px;
+        border-radius: 18px;
+      }
+
+      .inline-create-head {
+        align-items: flex-start;
+      }
+
+      .inline-create-actions {
+        flex-direction: column-reverse;
+      }
+
+      .inline-create-actions .btn {
+        width: 100%;
+      }
+
+      .quick-row, .form-grid { grid-template-columns: 1fr; }
+      .list-head {
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .list-head h2 { font-size: 20px; }
+
+      .task-card {
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 10px;
+        padding: 14px 12px 12px;
+        border-left-width: 4px;
+        border-radius: 20px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 250, 244, 0.74));
+        box-shadow: 0 12px 24px rgba(89, 49, 53, 0.08);
+      }
+
+      .task-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
+        pointer-events: none;
+      }
+
+      .task-card.done {
+        opacity: 0.82;
+        background: linear-gradient(180deg, rgba(240, 248, 243, 0.92), rgba(247, 251, 248, 0.78));
+      }
+
+      .task-card.done .check {
+        animation: done-bloom 2.4s ease-in-out infinite;
+      }
+
+      .check {
+        width: 26px;
+        height: 26px;
+        border-radius: 10px;
+        border-color: rgba(216, 75, 104, 0.24);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      }
+
+      .task-title { font-size: 16px; }
+      .meta { gap: 6px; font-size: 11px; }
+      .pill {
+        min-height: 24px;
+        padding: 3px 8px;
+        color: #7b6368;
+        background: rgba(255, 251, 248, 0.82);
+        border-color: rgba(216, 75, 104, 0.08);
+      }
+
+      .pill.high {
+        color: #a14346;
+        background: rgba(255, 232, 228, 0.86);
+      }
+
+      .pill.medium {
+        color: #9a6b2b;
+        background: rgba(255, 244, 220, 0.88);
+      }
+
+      .pill.low {
+        color: #4c7a62;
+        background: rgba(232, 247, 239, 0.88);
+      }
+
+      .meta .pill:nth-child(3) {
+        color: #705a63;
+        background: linear-gradient(135deg, rgba(255, 240, 241, 0.92), rgba(255, 249, 233, 0.92));
+        border-color: rgba(216, 75, 104, 0.14);
+      }
+
+      .note {
+        font-size: 13px;
+        line-height: 1.6;
+        color: #705c60;
+      }
+
+      .subtasks {
+        gap: 8px;
+      }
+
+      .subtask {
+        padding: 8px 10px;
+        border-radius: 14px;
+        background: rgba(255, 253, 250, 0.88);
+      }
+
+      .icon-btn {
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.84);
+      }
+
+      .task-card { grid-template-columns: auto minmax(0, 1fr); }
+      .task-actions { grid-column: 1 / -1; flex-direction: row; justify-content: flex-end; }
+      .form-actions { flex-direction: column-reverse; }
+      .form-actions .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true">
+    <span style="left:6%; top:18%; --size:22px; --duration:14s; --delay:-2s; --drift:28px;">♥</span>
+    <span class="particle" style="left:13%; top:68%; --size:9px; --duration:11s; --delay:-6s; --drift:-18px;"></span>
+    <span style="left:23%; top:42%; --size:16px; --duration:12s; --delay:-8s; --drift:-30px;">♥</span>
+    <span class="particle" style="left:34%; top:10%; --size:12px; --duration:15s; --delay:-4s; --drift:24px;"></span>
+    <span style="left:48%; top:76%; --size:25px; --duration:16s; --delay:-10s; --drift:38px;">♥</span>
+    <span class="particle" style="left:58%; top:28%; --size:8px; --duration:10s; --delay:-3s; --drift:-15px;"></span>
+    <span style="left:71%; top:14%; --size:18px; --duration:13s; --delay:-7s; --drift:22px;">♥</span>
+    <span class="particle" style="left:82%; top:60%; --size:13px; --duration:14s; --delay:-11s; --drift:-26px;"></span>
+    <span style="left:92%; top:34%; --size:24px; --duration:15s; --delay:-5s; --drift:-32px;">♥</span>
+    <span style="left:8%; top:52%; --size:20px; --duration:16s; --delay:-9s; --drift:20px;">♥</span>
+    <span class="particle" style="left:27%; top:88%; --size:11px; --duration:12s; --delay:-1s; --drift:-18px;"></span>
+    <span class="particle" style="left:46%; top:20%; --size:9px; --duration:14s; --delay:-12s; --drift:16px;"></span>
+    <span style="left:66%; top:74%; --size:22px; --duration:15s; --delay:-4s; --drift:-24px;">♥</span>
+    <span class="particle" style="left:95%; top:16%; --size:12px; --duration:11s; --delay:-8s; --drift:-12px;"></span>
+  </div>
+  <div class="app">
+    <main class="shell">
+      <section class="hero">
+        <div class="hero-main">
+          <details class="corner-menu" id="cornerMenu">
+            <summary class="menu-trigger" aria-label="更多功能">⋯</summary>
+            <div class="menu-popover">
+              <button class="menu-item" type="button" id="menuSearchBtn">查找事项</button>
+              <button class="menu-item" type="button" id="menuNewCategoryBtn">新建清单</button>
+              <button class="menu-item" type="button" id="menuExportBtn">导出备份</button>
+              <button class="menu-item" type="button" id="menuImportBtn">导入备份</button>
+            </div>
+          </details>
+          <div class="kicker"><span>♥</span> Two-person little plans</div>
+          <h1>CYJ&HYF</h1>
+          <p class="subtitle">把周末安排、纪念日准备、KTV 想唱的歌和临时小心愿都放在这里。</p>
+          <div class="stats" id="stats"></div>
+        </div>
+      </section>
+
+      <section class="layout">
+        <section class="panel">
+          <div class="toolbar-actions hidden" id="searchActions">
+            <button class="btn ghost small" type="button" id="hideSearchBtn">收起查找</button>
+          </div>
+          <div class="toolbar hidden" id="searchToolbar">
+            <input class="field" id="searchInput" placeholder="搜索事项、备注、曲目、标签" />
+            <select class="select" id="statusFilter">
+              <option value="all">全部状态</option>
+              <option value="todo">未完成</option>
+              <option value="done">已完成</option>
+            </select>
+            <select class="select" id="ownerFilter">
+              <option value="all">全部负责人</option>
+              <option value="一起">一起</option>
+              <option value="我">我</option>
+              <option value="她">她</option>
+            </select>
+            <input class="field" id="dateFilter" type="date" aria-label="按日期筛选" />
+          </div>
+          <div class="list-head">
+            <h2 id="currentCategoryName">全部事项</h2>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+              <button class="btn ghost small" id="resetDemoBtn">恢复示例</button>
+              <button class="btn ghost small" id="clearDoneBtn">清理已完成</button>
+            </div>
+          </div>
+          <div class="category-strip" id="categories"></div>
+          <section class="inline-create hidden" id="dateTaskCreator">
+            <div class="inline-create-head">
+              <div>
+                <strong>添加约会事项</strong>
+              </div>
+              <button class="btn small" type="button" id="showDateTaskFormBtn">添加</button>
+            </div>
+            <form class="inline-create-form hidden" id="dateTaskForm">
+              <div class="form-grid">
+                <label class="full"><strong>标题</strong><input class="field" id="dateTaskTitle" required maxlength="80" placeholder="例如：周五订餐厅" /></label>
+                <label><strong>负责人</strong><select class="select" id="dateTaskOwner"><option>一起</option><option>我</option><option>她</option></select></label>
+                <label><strong>日期</strong><input class="field" id="dateTaskDate" type="date" /></label>
+                <label><strong>优先级</strong><select class="select" id="dateTaskPriority"><option value="low">慢慢来</option><option value="medium">本周想做</option><option value="high">很想完成</option></select></label>
+                <label><strong>标签</strong><input class="field" id="dateTaskTags" placeholder="约会,晚餐,电影" /></label>
+                <label class="full"><strong>备注</strong><textarea id="dateTaskNote" placeholder="地点、预算、安排都可以记在这里"></textarea></label>
+                <label class="full"><strong>子事项</strong><textarea id="dateTaskSubtasks" placeholder="一行一个，例如：\n订餐厅\n买花\n查停车"></textarea></label>
+              </div>
+              <div class="inline-create-actions">
+                <button class="btn secondary" type="button" id="cancelDateTaskBtn">收起</button>
+                <button class="btn" type="submit">保存约会事项</button>
+              </div>
+            </form>
+          </section>
+          <div class="cards" id="taskList"></div>
+          <input class="hidden" type="file" id="backupInput" accept="application/json" />
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="dialog" id="taskDialog" aria-hidden="true">
+    <form class="dialog-card" id="taskForm">
+      <div class="panel-title">
+        <h2 id="taskDialogTitle">添加事项</h2>
+        <button class="icon-btn" type="button" data-close="taskDialog" aria-label="关闭">×</button>
+      </div>
+      <div class="form-grid">
+        <label class="full"><strong>标题</strong><input class="field" id="taskTitle" required maxlength="80" placeholder="例如：周末 KTV 想唱的歌" /></label>
+        <label><strong>所属清单</strong><select class="select" id="taskCategory"></select></label>
+        <label><strong>负责人</strong><select class="select" id="taskOwner"><option>一起</option><option>我</option><option>她</option></select></label>
+        <label><strong>日期</strong><input class="field" id="taskDate" type="date" /></label>
+        <label><strong>优先级</strong><select class="select" id="taskPriority"><option value="low">慢慢来</option><option value="medium">本周想做</option><option value="high">很想完成</option></select></label>
+        <label class="full"><strong>标签</strong><input class="field" id="taskTags" placeholder="用逗号分隔，例如 约会,音乐,周末" /></label>
+        <label class="full"><strong>备注</strong><textarea id="taskNote" placeholder="地点、预算、链接、想法都可以记在这里"></textarea></label>
+        <div class="full">
+          <label><strong>子事项 / 曲目 / 采购项</strong></label>
+          <div id="subtaskInputs"></div>
+          <button class="btn ghost small" type="button" id="addSubtaskBtn">添加一行</button>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn secondary" type="button" data-close="taskDialog">取消</button>
+        <button class="btn" type="submit">保存</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    const STORAGE_KEY = "coupleTodoV1";
+    const REMOVED_CATEGORY_IDS = ["travel"];
+
+    const defaultState = {
+      activeCategory: "all",
+      categories: [
+        { id: "date", name: "约会安排", color: "#d84b68" },
+        { id: "ktv", name: "周末 KTV", color: "#6b91bf" },
+        { id: "home", name: "生活小事", color: "#d5a34d" }
+      ],
+      tasks: [
+        {
+          id: makeId(),
+          title: "周末 KTV 想唱的歌",
+          categoryId: "ktv",
+          owner: "一起",
+          date: nextWeekend(),
+          priority: "high",
+          tags: ["音乐", "周末"],
+          note: "先把想唱的歌收集起来，到店后按心情排序。",
+          done: false,
+          subtasks: [
+          ],
+          createdAt: Date.now()
+        },
+        {
+          id: makeId(),
+          title: "找一家有窗边位的晚餐店",
+          categoryId: "date",
+          owner: "我",
+          date: "",
+          priority: "medium",
+          tags: ["晚餐", "预约"],
+          note: "备选 2 家，确认营业时间和停车。",
+          done: false,
+          subtasks: [
+            { id: makeId(), text: "收藏餐厅链接", done: false },
+            { id: makeId(), text: "提前一天预约", done: false }
+          ],
+          createdAt: Date.now() - 2000
+        }
+      ]
+    };
+
+    let state = loadState();
+    let editingTaskId = null;
+    const CATEGORY_COLOR_POOL = ["#d84b68", "#6b91bf", "#d5a34d", "#87bfa4", "#f29b77"];
+
+    const els = {
+      cornerMenu: document.getElementById("cornerMenu"),
+      menuSearchBtn: document.getElementById("menuSearchBtn"),
+      menuNewCategoryBtn: document.getElementById("menuNewCategoryBtn"),
+      menuExportBtn: document.getElementById("menuExportBtn"),
+      menuImportBtn: document.getElementById("menuImportBtn"),
+      searchActions: document.getElementById("searchActions"),
+      searchToolbar: document.getElementById("searchToolbar"),
+      hideSearchBtn: document.getElementById("hideSearchBtn"),
+      stats: document.getElementById("stats"),
+      categories: document.getElementById("categories"),
+      taskList: document.getElementById("taskList"),
+      currentCategoryName: document.getElementById("currentCategoryName"),
+      searchInput: document.getElementById("searchInput"),
+      statusFilter: document.getElementById("statusFilter"),
+      ownerFilter: document.getElementById("ownerFilter"),
+      dateFilter: document.getElementById("dateFilter"),
+      dateTaskCreator: document.getElementById("dateTaskCreator"),
+      showDateTaskFormBtn: document.getElementById("showDateTaskFormBtn"),
+      dateTaskForm: document.getElementById("dateTaskForm"),
+      dateTaskTitle: document.getElementById("dateTaskTitle"),
+      dateTaskOwner: document.getElementById("dateTaskOwner"),
+      dateTaskDate: document.getElementById("dateTaskDate"),
+      dateTaskPriority: document.getElementById("dateTaskPriority"),
+      dateTaskTags: document.getElementById("dateTaskTags"),
+      dateTaskNote: document.getElementById("dateTaskNote"),
+      dateTaskSubtasks: document.getElementById("dateTaskSubtasks"),
+      cancelDateTaskBtn: document.getElementById("cancelDateTaskBtn"),
+      taskDialog: document.getElementById("taskDialog"),
+      taskForm: document.getElementById("taskForm"),
+      taskDialogTitle: document.getElementById("taskDialogTitle"),
+      taskTitle: document.getElementById("taskTitle"),
+      taskCategory: document.getElementById("taskCategory"),
+      taskOwner: document.getElementById("taskOwner"),
+      taskDate: document.getElementById("taskDate"),
+      taskPriority: document.getElementById("taskPriority"),
+      taskTags: document.getElementById("taskTags"),
+      taskNote: document.getElementById("taskNote"),
+      subtaskInputs: document.getElementById("subtaskInputs"),
+      backupInput: document.getElementById("backupInput"),
+      toast: document.getElementById("toast")
+    };
+
+    init();
+
+    function init() {
+      bindEvents();
+      render();
+    }
+
+    function bindEvents() {
+      els.menuSearchBtn.addEventListener("click", focusSearchFromMenu);
+      els.menuNewCategoryBtn.addEventListener("click", createCategoryFromMenu);
+      els.menuExportBtn.addEventListener("click", () => {
+        closeCornerMenu();
+        exportBackup();
+      });
+      els.menuImportBtn.addEventListener("click", () => {
+        closeCornerMenu();
+        els.backupInput.click();
+      });
+      els.showDateTaskFormBtn.addEventListener("click", openDateTaskCreator);
+      els.cancelDateTaskBtn.addEventListener("click", closeDateTaskCreator);
+      els.hideSearchBtn.addEventListener("click", hideSearchTools);
+      document.getElementById("addSubtaskBtn").addEventListener("click", () => addSubtaskInput(""));
+      document.getElementById("clearDoneBtn").addEventListener("click", clearDoneTasks);
+      document.getElementById("resetDemoBtn").addEventListener("click", resetDemo);
+
+      els.searchInput.addEventListener("input", renderTasks);
+      els.statusFilter.addEventListener("change", renderTasks);
+      els.ownerFilter.addEventListener("change", renderTasks);
+      els.dateFilter.addEventListener("change", renderTasks);
+      els.dateTaskForm.addEventListener("submit", saveDateTaskFromForm);
+      els.taskForm.addEventListener("submit", saveTaskFromForm);
+      els.backupInput.addEventListener("change", importBackup);
+
+      document.querySelectorAll("[data-close]").forEach((button) => {
+        button.addEventListener("click", () => closeDialog(button.dataset.close));
+      });
+
+      document.querySelectorAll(".dialog").forEach((dialog) => {
+        dialog.addEventListener("click", (event) => {
+          if (event.target === dialog) closeDialog(dialog.id);
+        });
+      });
+
+      document.addEventListener("click", (event) => {
+        if (!els.cornerMenu.open) return;
+        if (!els.cornerMenu.contains(event.target)) closeCornerMenu();
+      });
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(defaultState);
+        const parsed = JSON.parse(raw);
+        return normalizeState({
+          activeCategory: parsed.activeCategory || "all",
+          categories: parsed.categories?.length ? parsed.categories : structuredClone(defaultState.categories),
+          tasks: Array.isArray(parsed.tasks) ? parsed.tasks : []
+        });
+      } catch (error) {
+        return structuredClone(defaultState);
+      }
+    }
+
+    function saveLocalState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function saveState() {
+      saveLocalState();
+    }
+
+    function normalizeState(nextState) {
+      const categories = orderCategories((nextState.categories || []).filter((category) => !REMOVED_CATEGORY_IDS.includes(category.id)));
+      const validCategoryIds = new Set(categories.map((category) => category.id));
+      const tasks = (nextState.tasks || []).filter((task) => validCategoryIds.has(task.categoryId));
+      return {
+        activeCategory: validCategoryIds.has(nextState.activeCategory) ? nextState.activeCategory : "all",
+        categories: categories.length ? categories : structuredClone(defaultState.categories),
+        tasks
+      };
+    }
+
+    function render() {
+      renderStats();
+      renderCategories();
+      renderCategoryOptions();
+      renderDateTaskCreator();
+      renderTasks();
+    }
+
+    function renderStats() {
+      const total = state.tasks.length;
+      const done = state.tasks.filter((task) => task.done).length;
+      const open = total - done;
+      const songs = state.tasks.flatMap((task) => task.subtasks || []).length;
+      els.stats.innerHTML = `
+        <div class="stat"><strong>${open}</strong><span>还想一起完成</span></div>
+        <div class="stat"><strong>${done}</strong><span>已经完成</span></div>
+        <div class="stat"><strong>${songs}</strong><span>子事项 / 曲目</span></div>
+      `;
+    }
+
+    function renderCategories() {
+      const allCount = state.tasks.length;
+      const categoryRows = [{ id: "all", name: "全部事项", color: "#d84b68", count: allCount }, ...orderCategories(state.categories).map((category) => ({
+        ...category,
+        count: state.tasks.filter((task) => task.categoryId === category.id).length
+      }))];
+
+      els.categories.innerHTML = categoryRows.map((category) => `
+        <button class="category-chip ${state.activeCategory === category.id ? "active" : ""}" data-category-id="${category.id}">
+          ${escapeHtml(category.name)} · ${category.count}
+        </button>
+      `).join("");
+
+      els.categories.querySelectorAll(".category-chip").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.activeCategory = button.dataset.categoryId;
+          saveState();
+          closeDateTaskCreator();
+          render();
+        });
+      });
+    }
+
+    function renderCategoryOptions() {
+      els.taskCategory.innerHTML = orderCategories(state.categories).map((category) => `<option value="${category.id}">${escapeHtml(category.name)}</option>`).join("");
+    }
+
+    function renderDateTaskCreator() {
+      const visible = state.activeCategory === "date";
+      els.dateTaskCreator.classList.toggle("hidden", !visible);
+      if (!visible) closeDateTaskCreator();
+    }
+
+    function renderTasks() {
+      const tasks = getFilteredTasks();
+      const category = state.categories.find((item) => item.id === state.activeCategory);
+      els.currentCategoryName.textContent = category ? category.name : "全部事项";
+
+      if (!tasks.length) {
+        const emptyMessage = state.activeCategory === "date"
+          ? "这里还没有约会安排。可以直接在上方添加新的约会事项。"
+          : "这里还没有符合条件的事项。试试切换筛选条件或选择其他清单。";
+        els.taskList.innerHTML = `<div class="empty">${emptyMessage}</div>`;
+        renderStats();
+        return;
+      }
+
+      els.taskList.innerHTML = tasks.map((task) => {
+        const categoryInfo = getCategory(task.categoryId);
+        const priorityText = { high: "很想完成", medium: "本周想做", low: "慢慢来" }[task.priority] || "慢慢来";
+        const tags = (task.tags || []).map((tag) => `<span class="pill">#${escapeHtml(tag)}</span>`).join("");
+        const subtasks = (task.subtasks || []).map((subtask) => `
+          <div class="subtask ${subtask.done ? "done" : ""}">
+            <input type="checkbox" ${subtask.done ? "checked" : ""} data-subtask-toggle="${task.id}:${subtask.id}" />
+            <span>${escapeHtml(subtask.text)}</span>
+            <button class="icon-btn" data-subtask-delete="${task.id}:${subtask.id}" title="删除">×</button>
+          </div>
+        `).join("");
+
+        return `
+          <article class="task-card ${task.done ? "done" : ""}" style="--cat-color:${categoryInfo.color}">
+            <button class="check" data-toggle-task="${task.id}" aria-label="切换完成状态">✓</button>
+            <div>
+              <h3 class="task-title">${escapeHtml(task.title)}</h3>
+              <div class="meta">
+                <span class="pill">${escapeHtml(categoryInfo.name)}</span>
+                <span class="pill">${escapeHtml(task.owner || "一起")}</span>
+                ${task.date ? `<span class="pill">${formatDate(task.date)}</span>` : ""}
+                <span class="pill ${task.priority}">${priorityText}</span>
+                ${tags}
+              </div>
+              ${task.note ? `<div class="note">${escapeHtml(task.note)}</div>` : ""}
+              ${subtasks ? `<div class="subtasks">${subtasks}</div>` : ""}
+            </div>
+            <div class="task-actions">
+              <button class="icon-btn" data-edit-task="${task.id}" title="编辑">✎</button>
+              <button class="icon-btn" data-delete-task="${task.id}" title="删除">×</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      els.taskList.querySelectorAll("[data-toggle-task]").forEach((button) => {
+        button.addEventListener("click", () => toggleTask(button.dataset.toggleTask));
+      });
+      els.taskList.querySelectorAll("[data-edit-task]").forEach((button) => {
+        button.addEventListener("click", () => openTaskDialog(button.dataset.editTask));
+      });
+      els.taskList.querySelectorAll("[data-delete-task]").forEach((button) => {
+        button.addEventListener("click", () => deleteTask(button.dataset.deleteTask));
+      });
+      els.taskList.querySelectorAll("[data-subtask-toggle]").forEach((checkbox) => {
+        checkbox.addEventListener("change", () => toggleSubtask(checkbox.dataset.subtaskToggle));
+      });
+      els.taskList.querySelectorAll("[data-subtask-delete]").forEach((button) => {
+        button.addEventListener("click", () => deleteSubtask(button.dataset.subtaskDelete));
+      });
+
+      renderStats();
+    }
+
+    function getFilteredTasks() {
+      const keyword = els.searchInput.value.trim().toLowerCase();
+      return state.tasks
+        .filter((task) => state.activeCategory === "all" || task.categoryId === state.activeCategory)
+        .filter((task) => els.statusFilter.value === "all" || (els.statusFilter.value === "done" ? task.done : !task.done))
+        .filter((task) => els.ownerFilter.value === "all" || task.owner === els.ownerFilter.value)
+        .filter((task) => !els.dateFilter.value || task.date === els.dateFilter.value)
+        .filter((task) => {
+          if (!keyword) return true;
+          const haystack = [
+            task.title,
+            task.note,
+            task.owner,
+            ...(task.tags || []),
+            ...(task.subtasks || []).map((subtask) => subtask.text)
+          ].join(" ").toLowerCase();
+          return haystack.includes(keyword);
+        })
+        .sort((a, b) => Number(a.done) - Number(b.done) || priorityRank(b.priority) - priorityRank(a.priority) || (a.date || "9999").localeCompare(b.date || "9999") || b.createdAt - a.createdAt);
+    }
+
+    function openDateTaskCreator() {
+      state.activeCategory = "date";
+      renderDateTaskCreator();
+      els.dateTaskForm.classList.remove("hidden");
+      els.dateTaskTitle.focus();
+      closeCornerMenu();
+    }
+
+    function closeDateTaskCreator() {
+      els.dateTaskForm.classList.add("hidden");
+      els.dateTaskForm.reset();
+      els.dateTaskPriority.value = "medium";
+      els.dateTaskOwner.value = "一起";
+    }
+
+    function saveDateTaskFromForm(event) {
+      event.preventDefault();
+      const title = els.dateTaskTitle.value.trim();
+      if (!title) return;
+
+      state.tasks.unshift({
+        id: makeId(),
+        title,
+        categoryId: "date",
+        owner: els.dateTaskOwner.value,
+        date: els.dateTaskDate.value,
+        priority: els.dateTaskPriority.value,
+        tags: els.dateTaskTags.value.split(/[,，]/).map((tag) => tag.trim()).filter(Boolean),
+        note: els.dateTaskNote.value.trim(),
+        done: false,
+        subtasks: els.dateTaskSubtasks.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((text) => ({ id: makeId(), text, done: false })),
+        createdAt: Date.now()
+      });
+
+      saveState();
+      closeDateTaskCreator();
+      render();
+      toast("已添加约会事项");
+    }
+
+    function openTaskDialog(taskId) {
+      editingTaskId = taskId || null;
+      const task = editingTaskId ? state.tasks.find((item) => item.id === editingTaskId) : null;
+      if (!task) return;
+      els.taskDialogTitle.textContent = task ? "编辑事项" : "添加事项";
+      els.taskTitle.value = task?.title || "";
+      els.taskCategory.value = task?.categoryId || (state.activeCategory !== "all" ? state.activeCategory : state.categories[0]?.id);
+      els.taskOwner.value = task?.owner || "一起";
+      els.taskDate.value = task?.date || "";
+      els.taskPriority.value = task?.priority || "medium";
+      els.taskTags.value = (task?.tags || []).join(", ");
+      els.taskNote.value = task?.note || "";
+      els.subtaskInputs.innerHTML = "";
+      (task?.subtasks?.length ? task.subtasks : [{ text: "", done: false }]).forEach((subtask) => addSubtaskInput(subtask.text));
+      openDialog("taskDialog");
+      els.taskTitle.focus();
+    }
+
+    function saveTaskFromForm(event) {
+      event.preventDefault();
+      const payload = {
+        title: els.taskTitle.value.trim(),
+        categoryId: els.taskCategory.value,
+        owner: els.taskOwner.value,
+        date: els.taskDate.value,
+        priority: els.taskPriority.value,
+        tags: els.taskTags.value.split(/[,，]/).map((tag) => tag.trim()).filter(Boolean),
+        note: els.taskNote.value.trim(),
+        subtasks: [...els.subtaskInputs.querySelectorAll("input")]
+          .map((input) => input.value.trim())
+          .filter(Boolean)
+          .map((text) => ({ id: makeId(), text, done: false }))
+      };
+
+      if (!payload.title) return;
+
+      if (editingTaskId) {
+        const index = state.tasks.findIndex((task) => task.id === editingTaskId);
+        const oldTask = state.tasks[index];
+        const previousSubtasks = oldTask.subtasks || [];
+        payload.subtasks = payload.subtasks.map((subtask, subtaskIndex) => ({
+          ...subtask,
+          id: previousSubtasks[subtaskIndex]?.id || subtask.id,
+          done: previousSubtasks[subtaskIndex]?.text === subtask.text ? previousSubtasks[subtaskIndex].done : false
+        }));
+        state.tasks[index] = { ...oldTask, ...payload };
+        toast("事项已更新");
+      } else {
+        state.tasks.unshift({ id: makeId(), ...payload, done: false, createdAt: Date.now() });
+        toast("已添加新事项");
+      }
+
+      saveState();
+      closeDialog("taskDialog");
+      render();
+    }
+
+    function addSubtaskInput(value) {
+      const row = document.createElement("div");
+      row.className = "subtask-editor";
+      row.innerHTML = `<input class="field" maxlength="80" placeholder="例如：歌名 - 歌手" value="${escapeAttribute(value)}" /><button class="icon-btn" type="button">×</button>`;
+      row.querySelector("button").addEventListener("click", () => row.remove());
+      els.subtaskInputs.appendChild(row);
+    }
+
+    function toggleTask(taskId) {
+      const task = state.tasks.find((item) => item.id === taskId);
+      if (!task) return;
+      task.done = !task.done;
+      saveState();
+      renderTasks();
+    }
+
+    function toggleSubtask(key) {
+      const [taskId, subtaskId] = key.split(":");
+      const task = state.tasks.find((item) => item.id === taskId);
+      const subtask = task?.subtasks?.find((item) => item.id === subtaskId);
+      if (!subtask) return;
+      subtask.done = !subtask.done;
+      saveState();
+      renderTasks();
+    }
+
+    function deleteSubtask(key) {
+      const [taskId, subtaskId] = key.split(":");
+      const task = state.tasks.find((item) => item.id === taskId);
+      if (!task) return;
+      task.subtasks = (task.subtasks || []).filter((item) => item.id !== subtaskId);
+      saveState();
+      renderTasks();
+      toast("已删除子项");
+    }
+
+    function deleteTask(taskId) {
+      if (!confirm("确定删除这个事项吗？")) return;
+      state.tasks = state.tasks.filter((task) => task.id !== taskId);
+      saveState();
+      render();
+      toast("事项已删除");
+    }
+
+    function clearDoneTasks() {
+      const doneCount = state.tasks.filter((task) => task.done).length;
+      if (!doneCount) return toast("目前没有已完成事项");
+      if (!confirm(`确定清理 ${doneCount} 个已完成事项吗？`)) return;
+      state.tasks = state.tasks.filter((task) => !task.done);
+      saveState();
+      render();
+      toast("已清理完成项");
+    }
+
+    function resetDemo() {
+      if (!confirm("恢复示例会替换当前事项和清单，建议先导出备份。继续吗？")) return;
+      state = structuredClone(defaultState);
+      closeDateTaskCreator();
+      saveState();
+      render();
+      toast("示例已恢复");
+    }
+
+    function exportBackup() {
+      const backup = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        state
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `恋爱待办备份-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importBackup(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const backup = JSON.parse(reader.result);
+          if (!backup.state?.categories || !Array.isArray(backup.state.tasks)) throw new Error("Invalid backup");
+          state = normalizeState(backup.state);
+          closeDateTaskCreator();
+          saveState();
+          render();
+          toast("备份已导入");
+        } catch (error) {
+          toast("备份文件格式不正确");
+        } finally {
+          els.backupInput.value = "";
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function openDialog(id) {
+      const dialog = document.getElementById(id);
+      dialog.classList.add("open");
+      dialog.setAttribute("aria-hidden", "false");
+    }
+
+    function closeDialog(id) {
+      const dialog = document.getElementById(id);
+      dialog.classList.remove("open");
+      dialog.setAttribute("aria-hidden", "true");
+    }
+
+    function focusSearchFromMenu() {
+      closeCornerMenu();
+      els.searchActions.classList.remove("hidden");
+      els.searchToolbar.classList.remove("hidden");
+      els.searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      els.searchInput.focus();
+    }
+
+    function hideSearchTools() {
+      els.searchActions.classList.add("hidden");
+      els.searchToolbar.classList.add("hidden");
+      els.searchInput.value = "";
+      els.statusFilter.value = "all";
+      els.ownerFilter.value = "all";
+      els.dateFilter.value = "";
+      renderTasks();
+    }
+
+    function createCategoryFromMenu() {
+      closeCornerMenu();
+      const name = prompt("输入新清单名称");
+      if (!name) return;
+      const trimmedName = name.trim();
+      if (!trimmedName) return;
+      const duplicate = state.categories.some((category) => category.name === trimmedName);
+      if (duplicate) return toast("已经有同名清单了");
+      const category = {
+        id: makeId(),
+        name: trimmedName,
+        color: CATEGORY_COLOR_POOL[state.categories.length % CATEGORY_COLOR_POOL.length]
+      };
+      state.categories = orderCategories([...state.categories, category]);
+      state.activeCategory = category.id;
+      saveState();
+      render();
+      toast("清单已创建");
+    }
+
+    function closeCornerMenu() {
+      els.cornerMenu.open = false;
+    }
+
+    function orderCategories(categories) {
+      return [...categories].sort((left, right) => {
+        if (left.id === "date") return -1;
+        if (right.id === "date") return 1;
+        return 0;
+      });
+    }
+
+    function getCategory(categoryId) {
+      return state.categories.find((category) => category.id === categoryId) || { name: "未分类", color: "#d84b68" };
+    }
+
+    function priorityRank(priority) {
+      return { high: 3, medium: 2, low: 1 }[priority] || 1;
+    }
+
+    function formatDate(date) {
+      const parsed = new Date(`${date}T00:00:00`);
+      if (Number.isNaN(parsed.getTime())) return date;
+      return `${parsed.getMonth() + 1}月${parsed.getDate()}日`;
+    }
+
+    function nextWeekend() {
+      const now = new Date();
+      const day = now.getDay();
+      const diff = day === 0 ? 6 : 6 - day;
+      now.setDate(now.getDate() + diff);
+      return now.toISOString().slice(0, 10);
+    }
+
+    function toast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      window.clearTimeout(toast.timer);
+      toast.timer = window.setTimeout(() => els.toast.classList.remove("show"), 1800);
+    }
+
+    function makeId() {
+      return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[char]));
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value).replace(/'/g, "&#39;");
+    }
+  </script>
+</body>
+</html>

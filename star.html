@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#07111b" />
+  <title>NEON DRIFT | 视觉实验室</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest" defer></script>
+  <style>
+    :root {
+      --ink: #ecfff8;
+      --muted: #97aaa9;
+      --line: rgba(213, 255, 246, 0.18);
+      --glass: rgba(4, 17, 27, 0.5);
+      --lime: #d8ff4e;
+      --aqua: #4cf8e4;
+      --coral: #ff735c;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: #07111b; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: Manrope, sans-serif;
+      background: #07111b;
+    }
+
+    button, input { font: inherit; }
+    button { color: inherit; }
+
+    .experience {
+      position: relative;
+      isolation: isolate;
+      min-height: 100svh;
+      overflow: hidden;
+      background: #07111b url("https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=2400&q=90") center / cover;
+    }
+
+    .experience::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(2, 11, 17, 0.82), rgba(2, 11, 17, 0.15) 63%, rgba(2, 11, 17, 0.65)),
+        linear-gradient(0deg, rgba(2, 11, 17, 0.78), transparent 50%);
+    }
+
+    .experience::after {
+      content: "";
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.16;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+
+    #field {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      mix-blend-mode: screen;
+      cursor: crosshair;
+    }
+
+    .topbar, .hero, .bottom-dock { position: relative; z-index: 2; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px clamp(20px, 4vw, 68px);
+      animation: rise 850ms 80ms both cubic-bezier(.2,.8,.2,1);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 27px;
+      height: 27px;
+      border: 1px solid var(--aqua);
+      transform: rotate(45deg);
+    }
+
+    .brand-mark::after {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: var(--lime);
+      box-shadow: 0 0 18px var(--lime);
+    }
+
+    .topbar-right, .live-pill { display: flex; align-items: center; }
+    .topbar-right { gap: 18px; }
+
+    .live-pill {
+      gap: 8px;
+      color: #d9ebe7;
+      font: 500 10px/1 "DM Mono", monospace;
+      letter-spacing: 0.13em;
+    }
+
+    .pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--lime);
+      box-shadow: 0 0 0 0 rgba(216, 255, 78, 0.7);
+      animation: pulse 1.8s infinite;
+    }
+
+    .icon-button {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: rgba(5, 23, 30, 0.36);
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+    }
+
+    .icon-button:hover { background: rgba(76, 248, 228, 0.16); border-color: var(--aqua); transform: rotate(18deg); }
+    .icon-button svg { width: 17px; }
+
+    .hero {
+      display: grid;
+      min-height: calc(100svh - 86px);
+      align-content: center;
+      padding: clamp(42px, 8vh, 92px) clamp(20px, 8vw, 136px) 180px;
+    }
+
+    .kicker {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 20px;
+      color: var(--aqua);
+      font: 500 11px/1.3 "DM Mono", monospace;
+      letter-spacing: 0.16em;
+      animation: rise 800ms 170ms both cubic-bezier(.2,.8,.2,1);
+    }
+
+    .kicker::before { content: ""; width: 38px; height: 1px; background: currentColor; }
+
+    h1 {
+      max-width: 850px;
+      margin: 0;
+      color: #f4fffc;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(58px, 10vw, 148px);
+      font-weight: 700;
+      line-height: 0.81;
+      letter-spacing: 0;
+      text-wrap: balance;
+      animation: rise 950ms 240ms both cubic-bezier(.2,.8,.2,1);
+    }
+
+    h1 em {
+      display: block;
+      color: transparent;
+      font-style: normal;
+      -webkit-text-stroke: 1px rgba(236, 255, 248, 0.82);
+    }
+
+    .intro-row {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 38px;
+      max-width: 920px;
+      margin-top: 34px;
+      animation: rise 900ms 340ms both cubic-bezier(.2,.8,.2,1);
+    }
+
+    .intro { max-width: 445px; margin: 0; color: #bdcdca; font-size: 14px; line-height: 1.8; }
+
+    .launch {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      flex: none;
+      padding: 0 0 9px;
+      border: 0;
+      border-bottom: 1px solid var(--lime);
+      background: transparent;
+      color: var(--lime);
+      font: 600 12px/1 "DM Mono", monospace;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: gap 180ms ease, color 180ms ease;
+    }
+
+    .launch:hover { gap: 20px; color: #f2ffae; }
+    .launch svg { width: 17px; }
+
+    .bottom-dock {
+      position: absolute;
+      right: clamp(20px, 4vw, 68px);
+      bottom: 27px;
+      left: clamp(20px, 4vw, 68px);
+      display: grid;
+      grid-template-columns: minmax(180px, 0.8fr) minmax(330px, 1.2fr) minmax(190px, 0.7fr);
+      align-items: stretch;
+      min-height: 109px;
+      border: 1px solid var(--line);
+      background: rgba(5, 20, 27, 0.54);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px) saturate(120%);
+      animation: rise 900ms 500ms both cubic-bezier(.2,.8,.2,1);
+    }
+
+    .dock-section { min-width: 0; padding: 17px 21px; border-right: 1px solid var(--line); }
+    .dock-section:last-child { border: 0; }
+    .dock-label { display: block; margin-bottom: 12px; color: var(--muted); font: 500 9px/1 "DM Mono", monospace; letter-spacing: 0.16em; }
+
+    .reading { display: flex; align-items: baseline; gap: 9px; }
+    .reading strong { color: #fff; font: 600 clamp(24px, 2.6vw, 34px)/1 "Space Grotesk", sans-serif; }
+    .reading span { color: var(--aqua); font: 500 10px/1 "DM Mono", monospace; }
+
+    .modes { display: flex; gap: 7px; }
+    .mode {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 6px;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      background: transparent;
+      color: #a5b9b6;
+      font: 500 10px/1 "DM Mono", monospace;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: color 180ms ease, background 180ms ease, border 180ms ease;
+    }
+
+    .mode:hover { color: #eafff9; }
+    .mode.active { border-color: rgba(216,255,78,.5); background: rgba(216,255,78,.12); color: var(--lime); }
+
+    .range-row { display: flex; align-items: center; gap: 12px; }
+    .range-row svg { flex: none; width: 15px; color: var(--coral); }
+    input[type="range"] { width: 100%; height: 3px; accent-color: var(--coral); cursor: pointer; }
+    .speed-value { width: 23px; color: #e8fffa; font: 500 10px/1 "DM Mono", monospace; text-align: right; }
+
+    .coords {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 7px 13px;
+      color: #d1e2de;
+      font: 500 10px/1.3 "DM Mono", monospace;
+    }
+    .coords span:nth-child(odd) { color: var(--muted); }
+    .coords span:nth-child(even) { text-align: right; }
+
+    .scanline { position: absolute; z-index: 3; top: 0; bottom: 0; width: 1px; background: var(--aqua); box-shadow: 0 0 12px var(--aqua); opacity: 0; pointer-events: none; }
+    .experience.scan .scanline { animation: scan 900ms ease-out; }
+    .experience.hyperjump::before { animation: colorShift 1.25s ease-out; }
+
+    @keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 70% { box-shadow: 0 0 0 6px rgba(216,255,78,0); } 100% { box-shadow: 0 0 0 0 rgba(216,255,78,0); } }
+    @keyframes scan { 0% { left: 0; opacity: 0; } 10%, 90% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
+    @keyframes colorShift { 0% { filter: hue-rotate(0deg) brightness(1); } 32% { filter: hue-rotate(36deg) brightness(1.4); } 100% { filter: hue-rotate(0deg) brightness(1); } }
+
+    @media (max-width: 720px) {
+      .topbar { padding: 20px; }
+      .live-pill { display: none; }
+      .hero { min-height: auto; padding: 96px 20px 292px; }
+      h1 { font-size: clamp(55px, 18vw, 85px); line-height: 0.84; }
+      .intro-row { align-items: flex-start; flex-direction: column; gap: 25px; margin-top: 27px; }
+      .bottom-dock { right: 20px; bottom: 20px; left: 20px; grid-template-columns: 1fr 1.1fr; min-height: 0; }
+      .dock-section { padding: 15px; }
+      .dock-section:nth-child(2) { border-right: 0; }
+      .dock-section:last-child { display: none; }
+    }
+
+    @media (max-width: 420px) {
+      .brand { font-size: 11px; }
+      .hero { padding-top: 70px; }
+      .bottom-dock { grid-template-columns: 1fr; }
+      .dock-section:first-child { border-right: 0; border-bottom: 1px solid var(--line); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="experience" id="experience">
+    <canvas id="field" aria-label="可交互的动态星云粒子场"></canvas>
+    <div class="scanline"></div>
+
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="NEON DRIFT 首页"><span class="brand-mark"></span>NEON DRIFT</a>
+      <div class="topbar-right">
+        <span class="live-pill"><span class="pulse"></span>FIELD ACTIVE</span>
+        <button class="icon-button" id="soundButton" type="button" aria-label="切换环境音效" title="切换环境音效"><i data-lucide="volume-2"></i></button>
+      </div>
+    </header>
+
+    <section class="hero" id="top">
+      <p class="kicker">SYNTHETIC SPACE / 0047</p>
+      <h1>向未知<em>偏航</em></h1>
+      <div class="intro-row">
+        <p class="intro">一场由光、噪声与偶然构成的深空漫游。移动指针，扰动这片永远不会重演的星际流场。</p>
+        <button class="launch" id="launchButton" type="button">启动跃迁 <i data-lucide="move-up-right"></i></button>
+      </div>
+    </section>
+
+    <aside class="bottom-dock" aria-label="星际流场控制台">
+      <section class="dock-section">
+        <span class="dock-label">DRIFT VELOCITY</span>
+        <div class="reading"><strong id="velocity">0.82</strong><span>AU / S</span></div>
+      </section>
+      <section class="dock-section">
+        <span class="dock-label">FIELD PROFILE</span>
+        <div class="modes" role="group" aria-label="星云模式">
+          <button class="mode active" type="button" data-mode="orbit">ORBIT</button>
+          <button class="mode" type="button" data-mode="flux">FLUX</button>
+          <button class="mode" type="button" data-mode="flare">FLARE</button>
+        </div>
+      </section>
+      <section class="dock-section">
+        <span class="dock-label">SIGNAL DENSITY</span>
+        <div class="range-row"><i data-lucide="waves"></i><input id="density" type="range" min="20" max="100" value="64" aria-label="信号密度" /><output class="speed-value" id="densityValue">64</output></div>
+      </section>
+      <section class="dock-section">
+        <span class="dock-label">LIVE COORDINATES</span>
+        <div class="coords"><span>X-AXIS</span><span id="coordX">+00.000</span><span>Y-AXIS</span><span id="coordY">+00.000</span></div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.querySelector('#field');
+    const context = canvas.getContext('2d');
+    const experience = document.querySelector('#experience');
+    const densityInput = document.querySelector('#density');
+    const densityValue = document.querySelector('#densityValue');
+    const velocity = document.querySelector('#velocity');
+    const coordX = document.querySelector('#coordX');
+    const coordY = document.querySelector('#coordY');
+    const soundButton = document.querySelector('#soundButton');
+    const launchButton = document.querySelector('#launchButton');
+    const modes = [...document.querySelectorAll('.mode')];
+    const pointer = { x: -500, y: -500 };
+    let particles = [];
+    let profile = 'orbit';
+    let density = Number(densityInput.value);
+    let soundOn = false;
+    let audioContext;
+    let drone;
+    let bursts = [];
+    let warpUntil = 0;
+
+    function resizeCanvas() {
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(window.innerWidth * ratio);
+      canvas.height = Math.floor(window.innerHeight * ratio);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      createParticles();
+    }
+
+    function createParticles() {
+      const total = Math.round((window.innerWidth * window.innerHeight / 16000) * (density / 45));
+      particles = Array.from({ length: Math.max(42, total) }, () => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        z: 0.2 + Math.random() * 1.2,
+        size: 0.25 + Math.random() * 1.45,
+        phase: Math.random() * Math.PI * 2
+      }));
+    }
+
+    function createBurst(x, y, color = '76,248,228') {
+      bursts.push({ x, y, color, startedAt: performance.now() });
+      bursts = bursts.slice(-5);
+    }
+
+    function drawBursts(time) {
+      context.save();
+      context.globalCompositeOperation = 'lighter';
+      bursts = bursts.filter((burst) => {
+        const progress = (time - burst.startedAt) / 1050;
+        if (progress >= 1) return false;
+        const radius = 18 + progress * Math.min(window.innerWidth, window.innerHeight) * 0.34;
+        const alpha = (1 - progress) * 0.45;
+        context.lineWidth = 2.5 * (1 - progress);
+        context.strokeStyle = `rgba(${burst.color},${alpha})`;
+        context.beginPath();
+        context.arc(burst.x, burst.y, radius, 0, Math.PI * 2);
+        context.stroke();
+        context.strokeStyle = `rgba(255,255,255,${alpha * 0.55})`;
+        context.lineWidth = 0.8;
+        context.beginPath();
+        context.arc(burst.x, burst.y, radius * 1.055, 0, Math.PI * 2);
+        context.stroke();
+        return true;
+      });
+      context.restore();
+    }
+
+    function drawField(time) {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      context.clearRect(0, 0, width, height);
+      const speed = profile === 'flare' ? 1.48 : profile === 'flux' ? 1.08 : 0.72;
+      const warp = Math.max(0, (warpUntil - time) / 1250);
+      const travelSpeed = speed * (1 + warp * 8);
+      velocity.textContent = (speed + density / 780).toFixed(2);
+      drawBursts(time);
+
+      if (pointer.x > -100) {
+        const halo = context.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, 150);
+        halo.addColorStop(0, `rgba(76,248,228,${0.16 + warp * 0.24})`);
+        halo.addColorStop(0.25, `rgba(216,255,78,${0.07 + warp * 0.1})`);
+        halo.addColorStop(1, 'rgba(76,248,228,0)');
+        context.fillStyle = halo;
+        context.beginPath();
+        context.arc(pointer.x, pointer.y, 150, 0, Math.PI * 2);
+        context.fill();
+      }
+
+      particles.forEach((particle, index) => {
+        const previousX = particle.x;
+        const previousY = particle.y;
+        const dx = pointer.x - particle.x;
+        const dy = pointer.y - particle.y;
+        const distance = Math.hypot(dx, dy);
+        const influence = Math.max(0, 1 - distance / 280);
+        const angle = Math.atan2(dy, dx) + Math.PI / 2;
+        const wave = Math.sin(time * 0.00055 + particle.phase + particle.x * 0.009);
+        const turn = profile === 'orbit' ? wave * 0.48 : profile === 'flux' ? Math.cos(time * 0.0007 + particle.y * 0.01) * 0.75 : wave * 1.15;
+        particle.x += (Math.cos(turn) * travelSpeed * particle.z + Math.cos(angle) * influence * (4.5 + warp * 10));
+        particle.y += (Math.sin(turn) * travelSpeed * particle.z + Math.sin(angle) * influence * (4.5 + warp * 10));
+
+        if (particle.x < -12) particle.x = width + 12;
+        if (particle.x > width + 12) particle.x = -12;
+        if (particle.y < -12) particle.y = height + 12;
+        if (particle.y > height + 12) particle.y = -12;
+
+        const alpha = Math.min(0.85, 0.2 + particle.z * 0.32 + influence * 0.42);
+        const color = profile === 'flare' ? `255,115,92` : profile === 'flux' ? `216,255,78` : `76,248,228`;
+        context.beginPath();
+        context.fillStyle = `rgba(${color},${alpha})`;
+        context.arc(particle.x, particle.y, particle.size + influence * 2, 0, Math.PI * 2);
+        context.fill();
+
+        if (warp > 0.04 || (profile === 'flare' && index % 2 === 0)) {
+          context.strokeStyle = `rgba(${color},${Math.min(0.7, alpha + warp * 0.3)})`;
+          context.lineWidth = particle.size * (0.8 + warp * 1.5);
+          context.beginPath();
+          context.moveTo(previousX, previousY);
+          context.lineTo(particle.x - (particle.x - previousX) * (4 + warp * 11), particle.y - (particle.y - previousY) * (4 + warp * 11));
+          context.stroke();
+        }
+
+        if (index % 3 === 0 && influence > 0.15) {
+          context.strokeStyle = `rgba(${color},${influence * 0.14})`;
+          context.lineWidth = 0.7;
+          context.beginPath();
+          context.moveTo(particle.x, particle.y);
+          context.lineTo(pointer.x, pointer.y);
+          context.stroke();
+        }
+      });
+      requestAnimationFrame(drawField);
+    }
+
+    function updatePointer(event) {
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      coordX.textContent = `${(event.clientX / window.innerWidth * 99.999 - 50).toFixed(3).padStart(7, '0')}`;
+      coordY.textContent = `${(event.clientY / window.innerHeight * 99.999 - 50).toFixed(3).padStart(7, '0')}`;
+    }
+
+    function toggleSound() {
+      soundOn = !soundOn;
+      if (soundOn) {
+        audioContext ??= new AudioContext();
+        drone ??= (() => {
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.type = 'sine';
+          oscillator.frequency.value = 57;
+          gain.gain.value = 0.018;
+          oscillator.connect(gain).connect(audioContext.destination);
+          oscillator.start();
+          return gain;
+        })();
+        audioContext.resume();
+        soundButton.innerHTML = '<i data-lucide="volume-2"></i>';
+      } else {
+        audioContext?.suspend();
+        soundButton.innerHTML = '<i data-lucide="volume-x"></i>';
+      }
+      lucide.createIcons();
+      soundButton.setAttribute('aria-label', soundOn ? '关闭环境音效' : '开启环境音效');
+    }
+
+    densityInput.addEventListener('input', () => {
+      density = Number(densityInput.value);
+      densityValue.textContent = density;
+      createParticles();
+    });
+
+    modes.forEach((mode) => mode.addEventListener('click', () => {
+      profile = mode.dataset.mode;
+      modes.forEach((item) => item.classList.toggle('active', item === mode));
+    }));
+
+    launchButton.addEventListener('click', () => {
+      profile = 'flare';
+      modes.forEach((item) => item.classList.toggle('active', item.dataset.mode === 'flare'));
+      warpUntil = performance.now() + 1250;
+      createBurst(window.innerWidth / 2, window.innerHeight / 2, '255,115,92');
+      experience.classList.remove('scan');
+      experience.classList.remove('hyperjump');
+      void experience.offsetWidth;
+      experience.classList.add('scan');
+      experience.classList.add('hyperjump');
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('pointermove', updatePointer, { passive: true });
+    canvas.addEventListener('click', (event) => {
+      createBurst(event.clientX, event.clientY, profile === 'flare' ? '255,115,92' : profile === 'flux' ? '216,255,78' : '76,248,228');
+    });
+    soundButton.addEventListener('click', toggleSound);
+    resizeCanvas();
+    requestAnimationFrame(drawField);
+    window.addEventListener('load', () => lucide.createIcons());
+  </script>
+</body>
+</html>
