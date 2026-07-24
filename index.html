@@ -221,13 +221,36 @@
       letter-spacing: 0;
     }
 
-    .subtitle {
+    .love-title {
       position: relative;
-      max-width: 620px;
-      margin: 12px 0 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.65;
+      max-width: 10.5em;
+      margin: 10px 0 0;
+      font-family: "STKaiti", "KaiTi", "Yu Mincho", Georgia, serif;
+      font-size: clamp(25px, 4.8vw, 48px);
+      line-height: 1.18;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #b43761;
+      text-wrap: balance;
+      text-shadow: 0 10px 24px rgba(216, 75, 104, 0.16);
+    }
+
+    .love-title-name,
+    .love-title-suffix {
+      background: linear-gradient(135deg, #c73e68 0%, #ea7594 48%, #e4a45a 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .love-title-days {
+      display: inline-block;
+      margin: 0 0.08em;
+      padding: 0 0.18em;
+      border-radius: 999px;
+      color: #fff9fb;
+      background: linear-gradient(135deg, #cf4b73, #ef8c8a);
+      box-shadow: 0 10px 22px rgba(207, 75, 115, 0.24);
     }
 
     .stats {
@@ -881,17 +904,12 @@
         text-shadow: 0 10px 22px rgba(255, 255, 255, 0.34);
       }
 
-      .subtitle {
-        margin-top: 10px;
-        max-width: 17em;
-        padding-right: 14px;
-        font-size: 12px;
-        line-height: 1.58;
-        display: -webkit-box;
-        overflow: hidden;
-        line-clamp: 3;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 3;
+      .love-title {
+        max-width: 8.4em;
+        margin-top: 8px;
+        padding-right: 10px;
+        font-size: clamp(23px, 9vw, 34px);
+        line-height: 1.22;
       }
 
       .stats {
@@ -1130,8 +1148,7 @@
             </div>
           </details>
           <div class="kicker"><span>♥</span> Two-person little plans</div>
-          <h1>CYJ&HYF</h1>
-          <p class="subtitle">把周末安排、纪念日准备、KTV 想唱的歌和临时小心愿都放在这里。</p>
+          <h1 class="love-title" id="loveTitle"></h1>
           <div class="stats" id="stats"></div>
         </div>
       </section>
@@ -1264,6 +1281,7 @@
     const PHOTO_LOOP_MS = 3600;
     const MAX_SYNC_PAYLOAD_BYTES = 900000;
     const REMOVED_CATEGORY_IDS = ["travel"];
+    const LOVE_START_DATE = "2025-12-31";
 
     const defaultState = {
       activeCategory: "all",
@@ -1327,6 +1345,7 @@
       searchActions: document.getElementById("searchActions"),
       searchToolbar: document.getElementById("searchToolbar"),
       hideSearchBtn: document.getElementById("hideSearchBtn"),
+      loveTitle: document.getElementById("loveTitle"),
       stats: document.getElementById("stats"),
       categories: document.getElementById("categories"),
       taskList: document.getElementById("taskList"),
@@ -1579,12 +1598,26 @@
     }
 
     function render() {
+      renderLoveTitle();
       renderStats();
       renderPhotoShowcase();
       renderCategories();
       renderCategoryOptions();
       renderDateTaskCreator();
       renderTasks();
+    }
+
+    function renderLoveTitle() {
+      const loveDays = getLoveDays();
+      els.loveTitle.innerHTML = `<span class="love-title-name">CYJ&HYF</span><span class="love-title-suffix">已经相爱</span><span class="love-title-days">${loveDays}</span><span class="love-title-suffix">天</span>`;
+    }
+
+    function getLoveDays() {
+      const start = new Date(`${LOVE_START_DATE}T00:00:00`);
+      const today = new Date();
+      const current = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const diffDays = Math.floor((current.getTime() - start.getTime()) / 86400000);
+      return Math.max(1, diffDays + 1);
     }
 
     function renderPhotoShowcase() {
