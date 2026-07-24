@@ -413,6 +413,21 @@
       font-size: 22px;
     }
 
+    .main-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .main-actions .btn {
+      min-height: 38px;
+      padding: 8px 10px;
+      border-radius: 14px;
+      font-size: 13px;
+      box-shadow: none;
+    }
+
     .cards {
       display: grid;
       gap: 12px;
@@ -876,6 +891,13 @@
         width: 100%;
       }
 
+      .main-actions .btn {
+        min-height: 34px;
+        padding: 7px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+      }
+
       .inline-create {
         padding: 12px;
         border-radius: 18px;
@@ -1057,9 +1079,13 @@
           <div class="list-head">
             <h2 id="currentCategoryName">全部事项</h2>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
-              <button class="btn ghost small" id="resetDemoBtn">恢复示例</button>
               <button class="btn ghost small" id="clearDoneBtn">清理已完成</button>
             </div>
+          </div>
+          <div class="main-actions">
+            <button class="btn" type="button" id="addTaskBtn">新增事项</button>
+            <button class="btn ghost" type="button" id="pullSyncBtn">更新内容</button>
+            <button class="btn ghost" type="button" id="pushSyncBtn">同步内容</button>
           </div>
           <div class="category-strip" id="categories"></div>
           <section class="inline-create hidden" id="dateTaskCreator">
@@ -1128,10 +1154,10 @@
       <div class="form-grid">
         <label class="full"><strong>Gist ID</strong><input class="field" id="syncGistId" placeholder="例如：a1b2c3d4e5f6..." /></label>
         <label class="full"><strong>同步文件名</strong><input class="field" id="syncFileName" placeholder="couple-todo-sync.json" /></label>
-        <label class="full"><strong>GitHub Token</strong><input class="field" id="syncToken" type="password" placeholder="默认只保存在当前浏览器会话" autocomplete="off" /></label>
+        <label class="full"><strong>GitHub Token</strong><input class="field" id="syncToken" type="password" placeholder="默认保存在当前浏览器" autocomplete="off" /></label>
         <div class="full file-row">
           <button class="btn ghost small" type="button" id="createGistBtn">用当前内容创建共享 Gist</button>
-          <p class="fineprint">两个人都要填写同一个 Gist ID。若两边都要能修改，通常也需要使用同一个有 gist 权限的 token。出于安全考虑，这里默认只把 token 存在当前浏览器会话里。</p>
+          <p class="fineprint">两个人都要填写同一个 Gist ID。若两边都要能修改，通常也需要使用同一个有 gist 权限的 token。为了避免刷新后失效，token 会保存在当前浏览器里，所以只建议在你们自己的设备上使用。</p>
         </div>
         <div class="full sync-status" id="syncStatus">未连接 GitHub 同步</div>
       </div>
@@ -1217,6 +1243,9 @@
       categories: document.getElementById("categories"),
       taskList: document.getElementById("taskList"),
       currentCategoryName: document.getElementById("currentCategoryName"),
+      addTaskBtn: document.getElementById("addTaskBtn"),
+      pullSyncBtn: document.getElementById("pullSyncBtn"),
+      pushSyncBtn: document.getElementById("pushSyncBtn"),
       searchInput: document.getElementById("searchInput"),
       statusFilter: document.getElementById("statusFilter"),
       ownerFilter: document.getElementById("ownerFilter"),
@@ -1262,7 +1291,7 @@
       bindEvents();
       render();
       populateSyncForm();
-      void setupSync();
+      void setupSync({ preferRemote: !syncConfig.lastRemoteUpdatedAt });
     }
 
     function bindEvents() {
@@ -1277,12 +1306,14 @@
         closeCornerMenu();
         els.backupInput.click();
       });
+      els.addTaskBtn.addEventListener("click", () => openTaskDialog());
+      els.pullSyncBtn.addEventListener("click", updateFromGithub);
+      els.pushSyncBtn.addEventListener("click", syncToGithub);
       els.showDateTaskFormBtn.addEventListener("click", openDateTaskCreator);
       els.cancelDateTaskBtn.addEventListener("click", closeDateTaskCreator);
       els.hideSearchBtn.addEventListener("click", hideSearchTools);
       document.getElementById("addSubtaskBtn").addEventListener("click", () => addSubtaskInput(""));
       document.getElementById("clearDoneBtn").addEventListener("click", clearDoneTasks);
-      document.getElementById("resetDemoBtn").addEventListener("click", resetDemo);
 
       els.searchInput.addEventListener("input", renderTasks);
       els.statusFilter.addEventListener("change", renderTasks);
@@ -1331,10 +1362,14 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
-    function saveState() {
-      state.updatedAt = Date.now();
+    function saveState(sharedChanged = true) {
+      if (sharedChanged) {
+        state.updatedAt = Date.now();
+      }
       saveLocalState();
-      scheduleRemotePush();
+      if (sharedChanged) {
+        scheduleRemotePush();
+      }
     }
 
     function normalizeState(nextState) {
@@ -1343,7 +1378,7 @@
       const tasks = (nextState.tasks || []).filter((task) => validCategoryIds.has(task.categoryId));
       return {
         activeCategory: validCategoryIds.has(nextState.activeCategory) ? nextState.activeCategory : "all",
-        updatedAt: Number(nextState.updatedAt) || Date.now(),
+        updatedAt: Number(nextState.updatedAt) || Math.max(0, ...(tasks.map((task) => Number(task.createdAt) || 0))),
         categories: categories.length ? categories : structuredClone(defaultState.categories),
         tasks
       };
@@ -1356,13 +1391,15 @@
         return {
           gistId: String(parsed.gistId || "").trim(),
           fileName: String(parsed.fileName || SYNC_DEFAULT_FILE).trim() || SYNC_DEFAULT_FILE,
-          token: sessionStorage.getItem(SYNC_TOKEN_KEY) || ""
+          token: localStorage.getItem(SYNC_TOKEN_KEY) || sessionStorage.getItem(SYNC_TOKEN_KEY) || "",
+          lastRemoteUpdatedAt: Number(parsed.lastRemoteUpdatedAt) || 0
         };
       } catch (error) {
         return {
           gistId: "",
           fileName: SYNC_DEFAULT_FILE,
-          token: sessionStorage.getItem(SYNC_TOKEN_KEY) || ""
+          token: localStorage.getItem(SYNC_TOKEN_KEY) || sessionStorage.getItem(SYNC_TOKEN_KEY) || "",
+          lastRemoteUpdatedAt: 0
         };
       }
     }
@@ -1370,12 +1407,15 @@
     function persistSyncConfig() {
       localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify({
         gistId: syncConfig.gistId,
-        fileName: syncConfig.fileName || SYNC_DEFAULT_FILE
+        fileName: syncConfig.fileName || SYNC_DEFAULT_FILE,
+        lastRemoteUpdatedAt: Number(syncConfig.lastRemoteUpdatedAt) || 0
       }));
 
       if (syncConfig.token) {
-        sessionStorage.setItem(SYNC_TOKEN_KEY, syncConfig.token);
+        localStorage.setItem(SYNC_TOKEN_KEY, syncConfig.token);
+        sessionStorage.removeItem(SYNC_TOKEN_KEY);
       } else {
+        localStorage.removeItem(SYNC_TOKEN_KEY);
         sessionStorage.removeItem(SYNC_TOKEN_KEY);
       }
     }
@@ -1386,23 +1426,24 @@
       els.syncToken.value = syncConfig.token || "";
     }
 
-    async function setupSync() {
+    async function setupSync({ preferRemote = false } = {}) {
       window.clearInterval(syncPullTimer);
       syncPullTimer = null;
 
       if (!syncConfig.gistId) {
         updateSyncStatus("未连接 GitHub 同步\n当前仍然只会保存在本地浏览器里。");
-        return;
+        return { applied: false, remoteMissing: false };
       }
 
       updateSyncStatus(syncConfig.token
         ? "已连接 Gist，正在检查远端内容…"
         : "已填写 Gist ID，但当前没有 token。现在是只读同步：能拉取别人的修改，不能把本地修改写回 GitHub。");
 
-      await pullRemoteState({ silent: true });
+      const initialPull = await pullRemoteState({ silent: true, force: preferRemote });
       syncPullTimer = window.setInterval(() => {
         void pullRemoteState({ silent: true });
       }, SYNC_POLL_MS);
+      return initialPull;
     }
 
     function render() {
@@ -1441,7 +1482,7 @@
       els.categories.querySelectorAll(".category-chip").forEach((button) => {
         button.addEventListener("click", () => {
           state.activeCategory = button.dataset.categoryId;
-          saveState();
+          saveState(false);
           closeDateTaskCreator();
           render();
         });
@@ -1590,7 +1631,7 @@
     function openTaskDialog(taskId) {
       editingTaskId = taskId || null;
       const task = editingTaskId ? state.tasks.find((item) => item.id === editingTaskId) : null;
-      if (!task) return;
+      if (editingTaskId && !task) return;
       els.taskDialogTitle.textContent = task ? "编辑事项" : "添加事项";
       els.taskTitle.value = task?.title || "";
       els.taskCategory.value = task?.categoryId || (state.activeCategory !== "all" ? state.activeCategory : state.categories[0]?.id);
@@ -1855,23 +1896,37 @@
       });
 
       if (!response.ok) {
-        if (response.status === 404) throw new Error("没有找到这个 Gist，请检查 Gist ID。");
-        if (response.status === 401 || response.status === 403) throw new Error("GitHub 拒绝了这次请求，请检查 token 权限或 API 限流。");
-        throw new Error(`GitHub 请求失败（${response.status}）。`);
+        if (response.status === 404) {
+          const error = new Error("没有找到这个 Gist，请检查 Gist ID。");
+          error.code = "missing-gist";
+          throw error;
+        }
+        if (response.status === 401 || response.status === 403) {
+          const error = new Error("GitHub 拒绝了这次请求，请检查 token 权限或 API 限流。");
+          error.code = "auth";
+          throw error;
+        }
+        const error = new Error(`GitHub 请求失败（${response.status}）。`);
+        error.code = "request-failed";
+        throw error;
       }
 
       const gist = await response.json();
       const fileName = syncConfig.fileName || SYNC_DEFAULT_FILE;
       const file = gist.files?.[fileName];
       if (!file?.content) {
-        throw new Error(`Gist 里还没有 ${fileName} 这个同步文件。`);
+        const error = new Error(`Gist 里还没有 ${fileName} 这个同步文件。`);
+        error.code = "missing-file";
+        throw error;
       }
 
       let remoteState;
       try {
         remoteState = JSON.parse(file.content);
       } catch (error) {
-        throw new Error("Gist 文件内容不是有效 JSON。");
+        const parseError = new Error("Gist 文件内容不是有效 JSON。");
+        parseError.code = "invalid-json";
+        throw parseError;
       }
 
       return normalizeState({
@@ -1880,27 +1935,31 @@
       });
     }
 
-    async function pullRemoteState({ silent = false } = {}) {
-      if (!canReadSync()) return false;
+    async function pullRemoteState({ silent = false, force = false } = {}) {
+      if (!canReadSync()) return { applied: false, remoteMissing: false };
 
       try {
         const remoteState = await fetchRemoteSnapshot(canWriteSync());
         const remoteUpdatedAt = Number(remoteState.updatedAt) || 0;
         const localUpdatedAt = Number(state.updatedAt) || 0;
+        const shouldApply = force || remoteUpdatedAt > localUpdatedAt;
 
-        if (remoteUpdatedAt > localUpdatedAt) {
+        syncConfig.lastRemoteUpdatedAt = remoteUpdatedAt;
+        persistSyncConfig();
+
+        if (shouldApply) {
           applyRemoteState(remoteState);
           if (!silent) toast("已拉取最新共享内容");
           updateSyncStatus(`已拉取远端更新\n最近远端时间：${formatSyncTime(remoteUpdatedAt)}`);
-          return true;
+          return { applied: true, remoteMissing: false };
         }
 
         updateSyncStatus(`已连接 Gist\n最近内容时间：${formatSyncTime(localUpdatedAt)}${canWriteSync() ? "\n当前可双向同步" : "\n当前为只读拉取"}`);
-        return false;
+        return { applied: false, remoteMissing: false };
       } catch (error) {
         updateSyncStatus(`读取同步内容失败\n${error.message}`);
         if (!silent) toast("读取 GitHub 同步失败");
-        return false;
+        return { applied: false, remoteMissing: error.code === "missing-file" };
       }
     }
 
@@ -1954,6 +2013,8 @@
           throw new Error(`写入 GitHub 失败（${response.status}）。`);
         }
 
+        syncConfig.lastRemoteUpdatedAt = Number(payload.updatedAt) || Date.now();
+        persistSyncConfig();
         updateSyncStatus(`写入 GitHub 成功\n最近写入时间：${formatSyncTime(payload.updatedAt)}`);
         if (manual) toast("已同步到 GitHub");
         return true;
@@ -1966,22 +2027,29 @@
 
     async function saveSyncSettings(event) {
       event.preventDefault();
+      const previousGistId = syncConfig.gistId;
+      const previousFileName = syncConfig.fileName;
+      const nextGistId = els.syncGistId.value.trim();
+      const nextFileName = els.syncFileName.value.trim() || SYNC_DEFAULT_FILE;
+      const targetChanged = nextGistId !== previousGistId || nextFileName !== previousFileName;
+
       syncConfig = {
-        gistId: els.syncGistId.value.trim(),
-        fileName: els.syncFileName.value.trim() || SYNC_DEFAULT_FILE,
-        token: els.syncToken.value.trim()
+        gistId: nextGistId,
+        fileName: nextFileName,
+        token: els.syncToken.value.trim(),
+        lastRemoteUpdatedAt: targetChanged ? 0 : Number(syncConfig.lastRemoteUpdatedAt) || 0
       };
       persistSyncConfig();
       populateSyncForm();
-      await setupSync();
+      const firstConnect = Boolean(syncConfig.gistId) && (targetChanged || !syncConfig.lastRemoteUpdatedAt);
+      const initialPull = await setupSync({ preferRemote: firstConnect });
 
       if (!syncConfig.gistId) {
         toast("已切回本地保存模式");
         return;
       }
 
-      const pulled = await pullRemoteState({ silent: true });
-      if (!pulled && canWriteSync()) {
+      if (initialPull.remoteMissing && canWriteSync()) {
         await pushRemoteState({ manual: true });
       } else {
         toast("同步设置已保存");
@@ -2025,7 +2093,8 @@
         syncConfig = {
           gistId: gist.id,
           fileName,
-          token
+          token,
+          lastRemoteUpdatedAt: Number(state.updatedAt) || Date.now()
         };
         persistSyncConfig();
         populateSyncForm();
@@ -2045,9 +2114,14 @@
       }
 
       const before = Number(state.updatedAt) || 0;
-      const pulled = await pullRemoteState({ silent: true });
-      if (pulled && Number(state.updatedAt) > before) {
+      const result = await pullRemoteState({ silent: true, force: !syncConfig.lastRemoteUpdatedAt });
+      if (result.applied && Number(state.updatedAt) >= before) {
         toast("已拉取最新共享内容");
+        return;
+      }
+
+      if (result.remoteMissing && canWriteSync()) {
+        await pushRemoteState({ manual: true });
         return;
       }
 
@@ -2058,6 +2132,32 @@
       }
     }
 
+    async function updateFromGithub() {
+      if (!canReadSync()) {
+        toast("请先在 Gist 同步里完成配置");
+        return;
+      }
+
+      const result = await pullRemoteState({ silent: false, force: true });
+      if (result.remoteMissing) {
+        toast("GitHub 上还没有同步文件，先点同步内容");
+        return;
+      }
+
+      if (!result.applied) {
+        toast("已经是 GitHub 上的最新内容");
+      }
+    }
+
+    async function syncToGithub() {
+      if (!canWriteSync()) {
+        toast("请先在 Gist 同步里填写可写 token");
+        return;
+      }
+
+      await pushRemoteState({ manual: true });
+    }
+
     function disconnectSync() {
       window.clearInterval(syncPullTimer);
       window.clearTimeout(syncPushTimer);
@@ -2066,7 +2166,8 @@
       syncConfig = {
         gistId: "",
         fileName: SYNC_DEFAULT_FILE,
-        token: ""
+        token: "",
+        lastRemoteUpdatedAt: 0
       };
       persistSyncConfig();
       populateSyncForm();
