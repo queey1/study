@@ -428,6 +428,159 @@
       box-shadow: none;
     }
 
+    .photo-showcase {
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 14px;
+      border: 1px solid rgba(216, 75, 104, 0.14);
+      border-radius: 24px;
+      background:
+        linear-gradient(155deg, rgba(255, 250, 246, 0.96), rgba(255, 241, 245, 0.82)),
+        rgba(255, 255, 255, 0.76);
+      box-shadow: 0 18px 36px rgba(89, 49, 53, 0.1);
+    }
+
+    .photo-showcase::before {
+      content: "";
+      position: absolute;
+      inset: auto -22px -36px auto;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(216, 75, 104, 0.16), rgba(216, 75, 104, 0));
+      pointer-events: none;
+    }
+
+    .photo-stage {
+      position: relative;
+      aspect-ratio: 4 / 5;
+      overflow: hidden;
+      border-radius: 20px;
+      background: linear-gradient(145deg, rgba(255, 247, 239, 0.96), rgba(246, 219, 225, 0.82));
+    }
+
+    .photo-stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      animation: photo-fade 0.48s ease;
+    }
+
+    .photo-overlay {
+      position: absolute;
+      inset: auto 12px 12px 12px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(48, 38, 40, 0.04), rgba(48, 38, 40, 0.56));
+      color: white;
+    }
+
+    .photo-meta {
+      min-width: 0;
+    }
+
+    .photo-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 24px;
+      margin-bottom: 6px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      font-size: 11px;
+      letter-spacing: 0.02em;
+    }
+
+    .photo-title {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.3;
+      text-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+      word-break: break-word;
+    }
+
+    .photo-caption {
+      margin: 4px 0 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 12px;
+    }
+
+    .photo-nav {
+      display: inline-flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .photo-nav-btn {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 999px;
+      color: white;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(10px);
+    }
+
+    .photo-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px 14px;
+    }
+
+    .photo-dots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .photo-dot {
+      width: 8px;
+      height: 8px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(216, 75, 104, 0.2);
+    }
+
+    .photo-dot.active {
+      width: 20px;
+      background: linear-gradient(135deg, rgba(216, 75, 104, 0.92), rgba(255, 181, 143, 0.94));
+    }
+
+    .photo-hint {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .photo-empty {
+      display: grid;
+      place-items: center;
+      min-height: 280px;
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.7;
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0)),
+        linear-gradient(145deg, rgba(255, 247, 239, 0.98), rgba(247, 223, 229, 0.78));
+    }
+
+    .photo-empty strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--rose-dark);
+      font-size: 18px;
+    }
+
     .cards {
       display: grid;
       gap: 12px;
@@ -707,6 +860,11 @@
       50% { transform: translateY(-6px); }
     }
 
+    @keyframes photo-fade {
+      from { opacity: 0.4; transform: scale(1.02); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
     }
@@ -898,6 +1056,51 @@
         font-size: 12px;
       }
 
+      .photo-showcase {
+        margin-bottom: 12px;
+        border-radius: 20px;
+      }
+
+      .photo-stage {
+        aspect-ratio: 10 / 11;
+        border-radius: 18px;
+      }
+
+      .photo-overlay {
+        inset: auto 10px 10px 10px;
+        padding: 10px;
+        border-radius: 16px;
+      }
+
+      .photo-title {
+        font-size: 15px;
+      }
+
+      .photo-caption {
+        font-size: 11px;
+      }
+
+      .photo-nav-btn {
+        width: 30px;
+        height: 30px;
+      }
+
+      .photo-footer {
+        align-items: flex-start;
+        padding: 10px 12px 12px;
+      }
+
+      .photo-hint {
+        max-width: 120px;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .photo-empty {
+        min-height: 236px;
+        padding: 18px;
+      }
+
       .inline-create {
         padding: 12px;
         border-radius: 18px;
@@ -1044,6 +1247,7 @@
             <div class="menu-popover">
               <button class="menu-item" type="button" id="menuSearchBtn">查找事项</button>
               <button class="menu-item" type="button" id="menuSyncBtn">Gist 同步</button>
+              <button class="menu-item" type="button" id="menuPhotoPickerBtn">选择轮播照片</button>
               <button class="menu-item" type="button" id="menuNewCategoryBtn">新建清单</button>
               <button class="menu-item" type="button" id="menuExportBtn">导出备份</button>
               <button class="menu-item" type="button" id="menuImportBtn">导入备份</button>
@@ -1087,6 +1291,7 @@
             <button class="btn ghost" type="button" id="pullSyncBtn">更新内容</button>
             <button class="btn ghost" type="button" id="pushSyncBtn">同步内容</button>
           </div>
+          <section class="photo-showcase" id="photoShowcase"></section>
           <div class="category-strip" id="categories"></div>
           <section class="inline-create hidden" id="dateTaskCreator">
             <div class="inline-create-head">
@@ -1113,6 +1318,7 @@
           </section>
           <div class="cards" id="taskList"></div>
           <input class="hidden" type="file" id="backupInput" accept="application/json" />
+          <input class="hidden" type="file" id="photoPicker" accept="image/*" multiple />
         </section>
       </section>
     </main>
@@ -1174,10 +1380,12 @@
 
   <script type="module">
     const STORAGE_KEY = "coupleTodoV1";
+    const PHOTO_STORAGE_KEY = "coupleTodoPhotosV1";
     const SYNC_CONFIG_KEY = "coupleTodoSyncConfigV1";
     const SYNC_TOKEN_KEY = "coupleTodoSyncTokenV1";
     const SYNC_DEFAULT_FILE = "couple-todo-sync.json";
     const SYNC_POLL_MS = 12000;
+    const PHOTO_LOOP_MS = 3600;
     const REMOVED_CATEGORY_IDS = ["travel"];
 
     const defaultState = {
@@ -1223,16 +1431,19 @@
     };
 
     let state = loadState();
+    let photoState = loadPhotoState();
     let editingTaskId = null;
     let syncConfig = loadSyncConfig();
     let syncPullTimer = null;
     let syncPushTimer = null;
+    let photoLoopTimer = null;
     const CATEGORY_COLOR_POOL = ["#d84b68", "#6b91bf", "#d5a34d", "#87bfa4", "#f29b77"];
 
     const els = {
       cornerMenu: document.getElementById("cornerMenu"),
       menuSearchBtn: document.getElementById("menuSearchBtn"),
       menuSyncBtn: document.getElementById("menuSyncBtn"),
+      menuPhotoPickerBtn: document.getElementById("menuPhotoPickerBtn"),
       menuNewCategoryBtn: document.getElementById("menuNewCategoryBtn"),
       menuExportBtn: document.getElementById("menuExportBtn"),
       menuImportBtn: document.getElementById("menuImportBtn"),
@@ -1242,6 +1453,7 @@
       stats: document.getElementById("stats"),
       categories: document.getElementById("categories"),
       taskList: document.getElementById("taskList"),
+      photoShowcase: document.getElementById("photoShowcase"),
       currentCategoryName: document.getElementById("currentCategoryName"),
       addTaskBtn: document.getElementById("addTaskBtn"),
       pullSyncBtn: document.getElementById("pullSyncBtn"),
@@ -1282,6 +1494,7 @@
       taskNote: document.getElementById("taskNote"),
       subtaskInputs: document.getElementById("subtaskInputs"),
       backupInput: document.getElementById("backupInput"),
+      photoPicker: document.getElementById("photoPicker"),
       toast: document.getElementById("toast")
     };
 
@@ -1290,6 +1503,7 @@
     function init() {
       bindEvents();
       render();
+      startPhotoLoop();
       populateSyncForm();
       void setupSync({ preferRemote: !syncConfig.lastRemoteUpdatedAt });
     }
@@ -1297,6 +1511,7 @@
     function bindEvents() {
       els.menuSearchBtn.addEventListener("click", focusSearchFromMenu);
       els.menuSyncBtn.addEventListener("click", openSyncDialog);
+      els.menuPhotoPickerBtn.addEventListener("click", openPhotoPicker);
       els.menuNewCategoryBtn.addEventListener("click", createCategoryFromMenu);
       els.menuExportBtn.addEventListener("click", () => {
         closeCornerMenu();
@@ -1326,6 +1541,7 @@
       els.disconnectSyncBtn.addEventListener("click", disconnectSync);
       els.syncNowBtn.addEventListener("click", syncNow);
       els.backupInput.addEventListener("change", importBackup);
+      els.photoPicker.addEventListener("change", importPhotos);
 
       document.querySelectorAll("[data-close]").forEach((button) => {
         button.addEventListener("click", () => closeDialog(button.dataset.close));
@@ -1360,6 +1576,33 @@
 
     function saveLocalState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadPhotoState() {
+      try {
+        const raw = localStorage.getItem(PHOTO_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        const slides = Array.isArray(parsed.slides)
+          ? parsed.slides.filter((slide) => slide?.dataUrl).map((slide, index) => ({
+            id: String(slide.id || makeId()),
+            name: String(slide.name || `照片 ${index + 1}`),
+            dataUrl: String(slide.dataUrl || "")
+          }))
+          : [];
+        return {
+          slides,
+          currentIndex: Math.min(Number(parsed.currentIndex) || 0, Math.max(0, slides.length - 1))
+        };
+      } catch (error) {
+        return { slides: [], currentIndex: 0 };
+      }
+    }
+
+    function savePhotoState() {
+      localStorage.setItem(PHOTO_STORAGE_KEY, JSON.stringify({
+        slides: photoState.slides,
+        currentIndex: photoState.currentIndex
+      }));
     }
 
     function saveState(sharedChanged = true) {
@@ -1448,10 +1691,153 @@
 
     function render() {
       renderStats();
+      renderPhotoShowcase();
       renderCategories();
       renderCategoryOptions();
       renderDateTaskCreator();
       renderTasks();
+    }
+
+    function renderPhotoShowcase() {
+      const slides = photoState.slides || [];
+      const total = slides.length;
+
+      if (!total) {
+        els.photoShowcase.innerHTML = `
+          <div class="photo-empty">
+            <div>
+              <strong>你们的照片小窗口</strong>
+              <div>点右上角菜单里的“选择轮播照片”，这里就会自动循环播放。</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      photoState.currentIndex = ((photoState.currentIndex % total) + total) % total;
+      const activeSlide = slides[photoState.currentIndex];
+      const dots = slides.map((slide, index) => `
+        <button class="photo-dot ${index === photoState.currentIndex ? "active" : ""}" type="button" data-photo-index="${index}" aria-label="查看第 ${index + 1} 张照片"></button>
+      `).join("");
+
+      els.photoShowcase.innerHTML = `
+        <div class="photo-stage">
+          <img src="${escapeAttribute(activeSlide.dataUrl)}" alt="${escapeAttribute(activeSlide.name)}" />
+          <div class="photo-overlay">
+            <div class="photo-meta">
+              <div class="photo-kicker">♥ 自动轮播中</div>
+              <p class="photo-title">${escapeHtml(activeSlide.name)}</p>
+              <p class="photo-caption">第 ${photoState.currentIndex + 1} 张，共 ${total} 张</p>
+            </div>
+            <div class="photo-nav">
+              <button class="photo-nav-btn" type="button" data-photo-shift="-1" aria-label="上一张">‹</button>
+              <button class="photo-nav-btn" type="button" data-photo-shift="1" aria-label="下一张">›</button>
+            </div>
+          </div>
+        </div>
+        <div class="photo-footer">
+          <div class="photo-dots">${dots}</div>
+          <div class="photo-hint">可以在右上角菜单里重新选择照片</div>
+        </div>
+      `;
+
+      els.photoShowcase.querySelectorAll("[data-photo-shift]").forEach((button) => {
+        button.addEventListener("click", () => shiftPhoto(Number(button.dataset.photoShift)));
+      });
+
+      els.photoShowcase.querySelectorAll("[data-photo-index]").forEach((button) => {
+        button.addEventListener("click", () => {
+          photoState.currentIndex = Number(button.dataset.photoIndex) || 0;
+          savePhotoState();
+          renderPhotoShowcase();
+          startPhotoLoop();
+        });
+      });
+    }
+
+    function startPhotoLoop() {
+      window.clearInterval(photoLoopTimer);
+      photoLoopTimer = null;
+      if ((photoState.slides || []).length <= 1) return;
+      photoLoopTimer = window.setInterval(() => {
+        shiftPhoto(1, { silent: true });
+      }, PHOTO_LOOP_MS);
+    }
+
+    function shiftPhoto(step, { silent = false } = {}) {
+      const total = photoState.slides.length;
+      if (!total) return;
+      photoState.currentIndex = (photoState.currentIndex + step + total) % total;
+      savePhotoState();
+      renderPhotoShowcase();
+      if (!silent) startPhotoLoop();
+    }
+
+    function openPhotoPicker() {
+      closeCornerMenu();
+      els.photoPicker.click();
+    }
+
+    async function importPhotos(event) {
+      const files = [...(event.target.files || [])].filter((file) => file.type.startsWith("image/"));
+      if (!files.length) return;
+
+      try {
+        const slides = [];
+        for (const file of files) {
+          slides.push(await fileToSlide(file));
+        }
+        photoState = {
+          slides,
+          currentIndex: 0
+        };
+        savePhotoState();
+        renderPhotoShowcase();
+        startPhotoLoop();
+        toast(`已更新 ${slides.length} 张轮播照片`);
+      } catch (error) {
+        toast("照片读取失败，请换几张更小的图片试试");
+      } finally {
+        els.photoPicker.value = "";
+      }
+    }
+
+    async function fileToSlide(file) {
+      const dataUrl = await readFileAsDataUrl(file);
+      const compressedDataUrl = await compressImageDataUrl(dataUrl);
+      return {
+        id: makeId(),
+        name: file.name.replace(/\.[^.]+$/, "") || "你们的照片",
+        dataUrl: compressedDataUrl
+      };
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("读取失败"));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function compressImageDataUrl(dataUrl) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          const maxSide = 1400;
+          const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(image.width * scale));
+          canvas.height = Math.max(1, Math.round(image.height * scale));
+          const context = canvas.getContext("2d");
+          if (!context) return reject(new Error("画布初始化失败"));
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.82));
+        };
+        image.onerror = () => reject(new Error("图片解析失败"));
+        image.src = dataUrl;
+      });
     }
 
     function renderStats() {
