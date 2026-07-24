@@ -225,6 +225,9 @@
       position: relative;
       max-width: 10.5em;
       margin: 10px 0 0;
+      display: grid;
+      justify-items: center;
+      gap: 6px;
       font-family: "STKaiti", "KaiTi", "Yu Mincho", Georgia, serif;
       font-size: clamp(25px, 4.8vw, 48px);
       line-height: 1.18;
@@ -232,25 +235,38 @@
       letter-spacing: 0.02em;
       color: #b43761;
       text-wrap: balance;
+      text-align: center;
       text-shadow: 0 10px 24px rgba(216, 75, 104, 0.16);
     }
 
-    .love-title-name,
+    .love-title-line {
+      display: block;
+      width: 100%;
+    }
+
+    .love-title-name {
+      color: #c44670;
+      font-size: 1.02em;
+      letter-spacing: 0.05em;
+    }
+
     .love-title-suffix {
-      background: linear-gradient(135deg, #c73e68 0%, #ea7594 48%, #e4a45a 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      color: #b85b75;
+      font-size: 0.78em;
     }
 
     .love-title-days {
       display: inline-block;
-      margin: 0 0.08em;
-      padding: 0 0.18em;
+      margin: 0 0.12em;
+      min-width: 2.1em;
+      padding: 0.04em 0.32em 0.08em;
       border-radius: 999px;
-      color: #fff9fb;
-      background: linear-gradient(135deg, #cf4b73, #ef8c8a);
-      box-shadow: 0 10px 22px rgba(207, 75, 115, 0.24);
+      color: #fff8fb;
+      background: linear-gradient(135deg, #d94d78, #f29d88);
+      box-shadow: 0 10px 24px rgba(217, 77, 120, 0.3);
+      font-size: 0.94em;
+      line-height: 1.05;
+      text-shadow: none;
     }
 
     .stats {
@@ -910,6 +926,7 @@
         padding-right: 10px;
         font-size: clamp(23px, 9vw, 34px);
         line-height: 1.22;
+        gap: 4px;
       }
 
       .stats {
@@ -1609,7 +1626,7 @@
 
     function renderLoveTitle() {
       const loveDays = getLoveDays();
-      els.loveTitle.innerHTML = `<span class="love-title-name">CYJ&HYF</span><span class="love-title-suffix">已经相爱</span><span class="love-title-days">${loveDays}</span><span class="love-title-suffix">天</span>`;
+      els.loveTitle.innerHTML = `<span class="love-title-line love-title-name">CYJ&HYF</span><span class="love-title-line love-title-suffix">已经相爱<span class="love-title-days">${loveDays}</span>天</span>`;
     }
 
     function getLoveDays() {
